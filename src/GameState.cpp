@@ -1,4 +1,4 @@
- //
+//
 // Created by Voric and tobisdev on 11/08/2024.
 //
 
@@ -7,6 +7,8 @@
 #include "../include/DeathState.h"
 #include "../include/Car.h"
 #include "../include/Game.h"
+
+int debug = 0;
 
 #define M_PI 3.141592653589793238462643383279502884197169399375105820974944
 bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
@@ -18,14 +20,16 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
     float s, t;
     float denominator = (-s2.x * s1.y + s1.x * s2.y);
 
-    if (fabs(denominator) < 1e-6)
+    if (fabs(denominator) < 1e-6) {
+        std::cerr << "[DEBUG] Lines are parallel or coincident.\n";
         return false;
-    //wenn das ned geht tot
+    }
     s = (-s1.y * (p0.x - p2.x) + s1.x * (p0.y - p2.y)) / denominator;
     t = ( s2.x * (p0.y - p2.y) - s2.y * (p0.x - p2.x)) / denominator;
 
-    if (s >= 0 && s <= 1 && t >= 0 && t <= 1) { // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
         intersectionPoint = p0 + (t * s1);
+        std::cout << "[DEBUG] Line intersection at (" << intersectionPoint.x << ", " << intersectionPoint.y << ")\n";
         return true;
     }
 
@@ -33,25 +37,58 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
 }
 
 GameState::GameState(Game& game, const std::string& levelFile) : car(game.getCar()) {
+    std::cout << "[DEBUG] Initializing GameState\n";
     initializeCar();
     initialiazeRays();
     placedTileSprites.clear();
     placedTileIDs.clear();
 
     ResourceManager& resourceManager = ResourceManager::getInstance();
+    std::cout << "[DEBUG] Loading tiles from CSV\n";
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
-
+    GameStateBackground(game);
     loadLevelFromCSV(levelFile, game);
+}
+
+void GameState::GameStateBackground(Game& game)
+{
+    ResourceManager &resourceManager = ResourceManager::getInstance();
+
+    std::cout << "[DEBUG] Setting up GameState background\n";
+
+    if (!resourceManager.textureExists("background5")) {
+        std::cout << "[DEBUG] Background texture not found. Loading texture 'background5'\n";
+        resourceManager.loadTexture("background5", "resources/Backgrounds/background5.png");
+    } else {
+        std::cout << "[DEBUG] Background texture 'background5' already loaded\n";
+    }
+
+    sf::Texture& backgroundTexture = resourceManager.getTexture("background5");
+    if (backgroundTexture.getSize().x == 0 || backgroundTexture.getSize().y == 0) {
+        std::cerr << "[DEBUG] Background texture is invalid (size is zero)\n";
+    } else {
+        std::cout << "[DEBUG] Background texture loaded successfully\n";
+    }
+    backgroundSprite.setTexture(backgroundTexture);
+
+    sf::Vector2u windowSize = game.window.getSize();
+    sf::Vector2u textureSize = backgroundTexture.getSize();
+    backgroundSprite.setScale(
+        static_cast<float>(windowSize.x) / textureSize.x,
+        static_cast<float>(windowSize.y) / textureSize.y
+    );
 }
 
 void GameState::handleInput(Game& game) {
     sf::Event event;
     while (game.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
+            std::cout << "[DEBUG] Window closed event received\n";
             game.window.close();
         }
         if (isPauseKeyPressed(event)) {
+            std::cout << "[DEBUG] Pause key pressed\n";
             game.pushState(std::make_shared<PauseState>());
         }
     }
@@ -60,9 +97,13 @@ void GameState::handleInput(Game& game) {
 
 void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
 
-    std::cout << "Level loading...\n";
+    std::cout << "[DEBUG] Level loading from file: " << filename << "\n";
 
     std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "[DEBUG] Failed to open level file: " << filename << "\n";
+        return;
+    }
     std::string line;
     int idx = 0;
 
@@ -71,10 +112,11 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
         char comma;
         int x, y;
 
-        std::cout << "idx: " << idx << "\n";
+        // std::cout << "idx: " << idx << "\n";
 
         if(idx == 0){
             ss >> x >> comma >> y;
+            std::cout << "[DEBUG] Level boundaries: x=" << x << ", y=" << y << "\n";
 
             // read the boundaries from the file
             boundaries = {x, y};
@@ -87,11 +129,16 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
 
             ss >> x >> comma >> y >> comma >> texture;
 
-            std::cout << "pos: [" << x << "/" << y << "], texture: " << texture << "\n";
+            //  std::cout << "pos: [" << x << "/" << y << "], texture: " << texture << "\n";
 
             if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y){
-                std::cerr << "The file seems to be corrupt!\n";
+                std::cerr << "[DEBUG] The file seems to be corrupt! Tile position out of bounds at idx " << idx << "\n";
                 return; // Return because the tiles are out of bounds!
+            }
+
+            if (texture < 0 || texture >= tiles.size()) {
+                std::cerr << "[DEBUG] Invalid texture index: " << texture << " at idx " << idx << "\n";
+                continue; // Skip invalid texture
             }
 
             sf::Sprite s;
@@ -104,9 +151,11 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
         }
         idx++;
     }
+    std::cout << "[DEBUG] Level loaded successfully\n";
 }
 
 void GameState::initialiazeRays() {
+    std::cout << "[DEBUG] Initializing rays\n";
     rayDistances.resize(5, 0.0f);
     rays.resize(5);
     collisionMarkers.reserve(5);
@@ -115,6 +164,8 @@ void GameState::initialiazeRays() {
 void GameState::performRaycasts(Game& game) {
     float rotation_angle = car.getRotationAngle();
     sf::Vector2f carPosition = car.getCurrentPosition();
+
+    std::cout << "[DEBUG] Performing raycasts. Car rotation angle: " << rotation_angle << "\n";
 
     std::vector<float> rayAngles = {
         rotation_angle - 90.0f,
@@ -175,7 +226,7 @@ void GameState::performRaycasts(Game& game) {
 
         sf::VertexArray ray(sf::Lines, 2);
         ray[0].position = carPosition;
-        ray[0].color = sf::Color(0, 255, 0, 255);;
+        ray[0].color = sf::Color(0, 255, 0, 255);
         ray[1].position = closestPoint;
         ray[1].color = sf::Color(0, 255, 0, 255);
         rays[i] = ray;
@@ -200,11 +251,11 @@ void GameState::performRaycasts(Game& game) {
     }
 }
 
-
 void GameState::update(Game& game) {
     car.update(game.dt);
     performRaycasts(game);
 
+    /*
     timeSinceLastPrint += game.dt;
     if (timeSinceLastPrint >= 1.0f) {
         std::cout << "Ray distances: ";
@@ -215,11 +266,13 @@ void GameState::update(Game& game) {
 
         timeSinceLastPrint = 0.0f;
     }
+    */
 
     sf::FloatRect carBounds = car.getBounds();
 
     for (const auto& wall : walls) {
         if (carBounds.intersects(wall.getGlobalBounds())) {
+            std::cout << "[DEBUG] Car collided with wall\n";
             game.changeState(std::make_shared<DeathState>());
             return;
         }
@@ -259,6 +312,7 @@ void GameState::debugDrawing(Game& game) {
 
 void GameState::render(Game& game) {
     game.window.clear();
+    game.window.draw(backgroundSprite);
     for (const auto &tileX : placedTileSprites) {
         for(const auto &tileY : tileX) {
             game.window.draw(tileY);
@@ -276,10 +330,10 @@ void GameState::render(Game& game) {
     }
 
     debugDrawing(game);
-
 }
 
 void GameState::initializeCar() {
+    std::cout << "[DEBUG] Initializing car\n";
     sf::Sprite &carSprite = car.getCarSprite();
     carSprite.setOrigin(carSprite.getLocalBounds().width / 2, carSprite.getLocalBounds().height / 2);
     carSprite.setPosition(400, 400);

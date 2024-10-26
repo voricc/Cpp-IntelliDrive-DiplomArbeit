@@ -31,6 +31,7 @@ public:
 
     void saveTilesToCSV(const std::string& filename);
     void loadTilesFromCSV(const std::string& filename);
+    bool textureExists(const std::string& textureKey) const;
 
     void setTile(int i, Tile &t) { tiles[i] = t; };
     [[ nodiscard ]] Tile &getTile(int i) { return tiles[i]; };

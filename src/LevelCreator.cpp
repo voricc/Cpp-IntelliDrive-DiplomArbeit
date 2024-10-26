@@ -34,10 +34,14 @@ void LevelCreator::initializeResources(Game& game) {
 
     resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
     font = resourceManager.getFont("Rubik-Regular");
-/*
-    resourceManager.loadTexture("background5", "resources/Backgrounds/background.webp");
-    resourceManager.setTexture("backgroundlc", "resources/background.webp");
-    sf::Texture& backgroundTexture = resourceManager.getTexture("backgroundlc");
+
+    // Load the background texture
+    resourceManager.loadTexture("background5", "resources/Backgrounds/background5.png");
+
+    // Remove the setTexture call
+    // resourceManager.setTexture("background5", "resources/Backgrounds/background5.png");
+
+    sf::Texture& backgroundTexture = resourceManager.getTexture("background5");
     backgroundSprite.setTexture(backgroundTexture);
 
     sf::Vector2u windowSize = game.window.getSize();
@@ -46,8 +50,8 @@ void LevelCreator::initializeResources(Game& game) {
         static_cast<float>(windowSize.x) / textureSize.x,
         static_cast<float>(windowSize.y) / textureSize.y
     );
-    */
 }
+
 
 void LevelCreator::createButtons(Game& game) {
     saveButton.setSize({100.0f, 30.0f});

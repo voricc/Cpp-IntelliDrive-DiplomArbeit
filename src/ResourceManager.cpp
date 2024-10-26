@@ -114,3 +114,7 @@ void ResourceManager::loadTilesFromCSV(const std::string& filename) {
     std::cout << "Tiles loaded from " << filename << std::endl;
     return;
 }
+
+bool ResourceManager::textureExists(const std::string& textureKey) const {
+    return textures.find(textureKey) != textures.end();
+}

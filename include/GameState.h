@@ -14,6 +14,8 @@
 class GameState : public State {
 public:
     GameState(Game& game, const std::string& levelFile);
+    void GameStateBackground(Game& game);
+
     GameState(Game& game) : car(game.getCar()) {
         initializeCar();
     }
@@ -27,6 +29,7 @@ public:
 private:
     Car& car;
     float timeSinceLastPrint = 0.0f;
+    sf::Sprite backgroundSprite;
 
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
