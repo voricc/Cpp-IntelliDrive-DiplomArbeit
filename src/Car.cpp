@@ -10,21 +10,21 @@ constexpr float PI = 3.14159265f;
 
 constexpr float MAX_ACCELERATION_CONSTANT = 1000.0f; // Units: pixels per second squared
 constexpr float MAX_ANGULAR_ACCELERATION_CONSTANT = 200.0f; // Units: degrees per second squared
-constexpr float MAX_SPEED = 900.0f; // Units: pixels per second
+constexpr float MAX_SPEED = 300.0f; // Units: pixels per second
+constexpr float ROTATIONAL_SPEED_MULTIPLIER = 0.00425;
+constexpr float ANGULAR_DAMPING_MULTIPLIER = 0.99;
 
 Car::Car()
     : current_position(0.0f, 0.0f),
-      previous_position(0.0f, 0.0f),
       velocity(0.0f, 0.0f),
       rotation_angle(0.0f),
       angular_velocity(0.0f),
       acceleration(0.0f),
       angular_acceleration(0.0f),
-      angular_damping(0.1f),
       friction_coefficient(0.30f), // Adjust between 0 (no friction) and 1 (full stop instantly)
       acceleration_constant(10.1f),
       angular_acceleration_constant(0.1f),
-      max_speed(10.0f),
+      max_speed(0.0f),
       maxSpeedValue(5.0f),
       handlingValue(5.0f),
       accelerationValue(5.0f)
@@ -75,11 +75,24 @@ void Car::update(float dt) {
         velocity = (velocity / speed) * max_speed;
     }
 
+    // Apply max speed
+    velocity = (max_speed > max_speed) ? forward_direction * max_speed : velocity;
+
     current_position += velocity * dt;
 
-    angular_velocity += angular_acceleration * dt;
+    // Make the rotational speed dependent on the movement speed
+    angular_velocity += angular_acceleration * speed * ROTATIONAL_SPEED_MULTIPLIER * dt;
 
-    angular_velocity -= angular_velocity * angular_damping * dt;
+    // Decelerate the rotation
+    float angular_velocity_new = angular_velocity * ANGULAR_DAMPING_MULTIPLIER;
+
+    // Make sure the car won't change directions
+    if(angular_velocity > 0 && angular_velocity_new < 0 || angular_velocity < 0 && angular_velocity_new > 0){
+        //angular_velocity = 0;
+    }else{
+        angular_velocity = angular_velocity_new;
+    }
+    angular_velocity = angular_velocity_new;
 
     rotation_angle += angular_velocity * dt;
 
