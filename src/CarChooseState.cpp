@@ -75,7 +75,7 @@ void CarChoosingState::update(Game& game) {
      carSprite.setPosition(game.window.getSize().x / 2, game.window.getSize().y / 2);
      carSprite.setScale(3.3f, 3.3f);
 
-    rotationAngle += 0.5f;
+    rotationAngle += 0.9f;
     if (rotationAngle >= 360.0f) {
         rotationAngle = 0.0f;
     }
