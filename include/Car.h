@@ -37,7 +37,7 @@ public:
     sf::Sprite& getCarSprite();
     void setPreviousPosition(const sf::Vector2f& position);
     void setCurrentPosition(const sf::Vector2f& position);
-    
+
     sf::Vector2f velocity;
 private:
     sf::Sprite carSprite;

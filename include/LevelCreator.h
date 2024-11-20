@@ -99,8 +99,8 @@ private:
     EditorState currentState = EditorState::Edit;
 
     std::vector<sf::Sprite> tileSelectionSprites;
-    std::vector<sf::RectangleShape> tileSelectionBorders; // Added borders
-    int tileSelectionRange = 2;
+    std::vector<sf::RectangleShape> tileSelectionBorders;
+    int tileSelectionRange = 3;
 
     bool selectingFavorites = false;
     std::vector<int> favoriteTiles;
@@ -113,6 +113,12 @@ private:
     std::vector<int> tileIndices;
     int selectedIndex = 0;
     int totalTiles = 0;
+
+    // Spawnpoint-Variablen
+    bool settingSpawnPoint = false;
+    sf::Vector2f spawnPointPosition;
+    sf::Vector2f spawnPointDirection;
+    bool hasSpawnPoint = false;
 };
 
 #endif // LEVELCREATOR_H

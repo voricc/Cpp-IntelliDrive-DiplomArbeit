@@ -15,6 +15,8 @@
 #include <numeric>   // For std::iota
 #include <sstream>   // For std::stringstream
 #include <filesystem> // For directory traversal
+#include <cmath>      // For atan2
+
 namespace fs = std::filesystem;
 
 LevelCreator::LevelCreator(Game& game) : GameState(game), showExplanation(true), currentState(EditorState::Edit) {
@@ -212,8 +214,8 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
             }
         }
         if (event.key.code == sf::Keyboard::C) {
-            sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
-            sf::Vector2i grid(static_cast<int>(mousePos.x / game.getTileSize()), static_cast<int>(mousePos.y / game.getTileSize()));
+            sf::Vector2i mousePosInt = sf::Mouse::getPosition(game.window);
+            sf::Vector2i grid(static_cast<int>(mousePosInt.x / game.getTileSize()), static_cast<int>(mousePosInt.y / game.getTileSize()));
 
             if (grid.x >= 0 && grid.x < boundaries.x && grid.y >= 0 && grid.y < boundaries.y) {
                 int tileID = placedTileIDs[grid.x][grid.y];
@@ -240,7 +242,6 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
                 inputFileName.clear();
                 isSaving = false;
             } else {
-                // Removed changing selected tile when clicking on showing tiles
                 mouseDown = true;
             }
         } else if (event.mouseButton.button == sf::Mouse::Right) {
@@ -263,6 +264,16 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
             if (!toggledFavorite) {
                 rightMouseDown = true;
             }
+        } else if (event.mouseButton.button == sf::Mouse::Middle) {
+            sf::Vector2i grid(static_cast<int>(mousePos.x / game.getTileSize()), static_cast<int>(mousePos.y / game.getTileSize()));
+
+            if (grid.x >= 0 && grid.x < boundaries.x && grid.y >= 0 && grid.y < boundaries.y) {
+                // Start setting spawn point
+                settingSpawnPoint = true;
+                spawnPointPosition.x = grid.x * game.getTileSize() + game.getTileSize() / 2;
+                spawnPointPosition.y = grid.y * game.getTileSize() + game.getTileSize() / 2;
+                spawnPointDirection = sf::Vector2f(0.f, 0.f);
+            }
         }
     }
 
@@ -271,6 +282,40 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
             mouseDown = false;
         } else if (event.mouseButton.button == sf::Mouse::Right) {
             rightMouseDown = false;
+        } else if (event.mouseButton.button == sf::Mouse::Middle) {
+            if (settingSpawnPoint) {
+                // Finalize the spawn point
+                settingSpawnPoint = false;
+                hasSpawnPoint = true;
+            }
+        }
+    }
+
+    if (event.type == sf::Event::MouseMoved) {
+        if (settingSpawnPoint) {
+            // Update spawnPointDirection with snapping
+            sf::Vector2f mousePos = game.window.mapPixelToCoords(sf::Mouse::getPosition(game.window));
+            sf::Vector2f rawDirection = mousePos - spawnPointPosition;
+
+            if (rawDirection != sf::Vector2f(0.f, 0.f)) {
+                // Calculate angle in degrees
+                float angle = std::atan2(rawDirection.y, rawDirection.x) * 180.f / 3.14159265f;
+
+                // Snap angle to nearest cardinal direction
+                if (angle >= -45.f && angle < 45.f) {
+                    // East
+                    spawnPointDirection = sf::Vector2f(1.f, 0.f);
+                } else if (angle >= 45.f && angle < 135.f) {
+                    // South
+                    spawnPointDirection = sf::Vector2f(0.f, 1.f);
+                } else if (angle >= -135.f && angle < -45.f) {
+                    // North
+                    spawnPointDirection = sf::Vector2f(0.f, -1.f);
+                } else {
+                    // West
+                    spawnPointDirection = sf::Vector2f(-1.f, 0.f);
+                }
+            }
         }
     }
 
@@ -284,11 +329,11 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
 }
 
 void LevelCreator::handleViewInput(const sf::Event& event, Game& game) {
-    // Implement if needed
+    // Implementiere bei Bedarf
 }
 
 void LevelCreator::handleButtonsInput(const sf::Event& event, Game& game) {
-    // Implement if needed
+    // Implementiere bei Bedarf
 }
 
 void LevelCreator::update(Game& game) {
@@ -296,7 +341,7 @@ void LevelCreator::update(Game& game) {
         return;
     }
 
-    // Update the help text
+    // Update des Hilfetexts
     std::string modeString;
     switch (currentState) {
         case EditorState::Edit:
@@ -336,19 +381,19 @@ void LevelCreator::updateEditState(Game& game) {
 }
 
 void LevelCreator::updateViewState(Game& game) {
-    // Implement if needed
+    // Implementiere bei Bedarf
 }
 
 void LevelCreator::updateButtonsState(Game& game) {
-    // Implement if needed
+    // Implementiere bei Bedarf
 }
 
 void LevelCreator::updateTileSelectionUI(Game& game) {
-    int displaySize = 7; // Number of tiles to display
+    int displaySize = 7; // Anzahl der anzuzeigenden Tiles
     tileSelectionRange = displaySize / 2;
 
     tileSelectionSprites.clear();
-    tileSelectionBorders.clear(); // Clear borders
+    tileSelectionBorders.clear(); // Lösche Ränder
 
     tileIndices.clear();
     if (selectingFavorites) {
@@ -360,7 +405,7 @@ void LevelCreator::updateTileSelectionUI(Game& game) {
 
     totalTiles = tileIndices.size();
 
-    if (totalTiles == 0) return; // No tiles to display
+    if (totalTiles == 0) return; // Keine Tiles zum Anzeigen
 
     if (selectingFavorites) {
         selectedIndex = selectedFavoriteIndex;
@@ -374,18 +419,18 @@ void LevelCreator::updateTileSelectionUI(Game& game) {
         sf::Sprite sprite;
         sprite.setTexture(tiles[tileID].getTexture());
 
-        // Increase scaleFactor to make tiles bigger
-        float scaleFactor = 1.2f; // Increased from 0.8f to 1.2f
+        // Erhöhe scaleFactor, um Tiles größer zu machen
+        float scaleFactor = 1.2f;
         float scale = game.getTileSize() / sprite.getLocalBounds().height * scaleFactor;
         sprite.setScale(scale, scale);
 
-        // Adjust the spacing to prevent overlap
-        float spacing = game.getTileSize() * scaleFactor * 1.1f; // Adjusted spacing factor
+        // Passe den Abstand an, um Überlappungen zu verhindern
+        float spacing = game.getTileSize() * scaleFactor * 1.1f;
         float xPos = game.window.getSize().x / 2 + i * spacing;
-        float yPos = game.window.getSize().y - game.getTileSize() * scaleFactor * 1.2f; // Adjust yPos as needed
+        float yPos = game.window.getSize().y - game.getTileSize() * scaleFactor * 1.2f;
         sprite.setPosition(xPos, yPos);
 
-        // Set transparency (optional)
+        // Setze Transparenz (optional)
         int maxAlpha = 255;
         int minAlpha = 100;
         int alphaRange = maxAlpha - minAlpha;
@@ -395,18 +440,17 @@ void LevelCreator::updateTileSelectionUI(Game& game) {
 
         tileSelectionSprites.push_back(sprite);
 
-        // Create a border rectangle around the sprite
+        // Erstelle ein Rechteck um den Sprite
         sf::FloatRect spriteBounds = sprite.getGlobalBounds();
         sf::RectangleShape border(sf::Vector2f(spriteBounds.width, spriteBounds.height));
         border.setPosition(spriteBounds.left, spriteBounds.top);
         border.setFillColor(sf::Color::Transparent);
         border.setOutlineColor(sf::Color{40,40,40});
         border.setOutlineThickness(2.0f);
-        // No need to set origin here
-        //tileSelectionBorders.push_back(border);
+        // Kein Bedarf, die Origin zu setzen
+        // tileSelectionBorders.push_back(border);
     }
 }
-
 
 void LevelCreator::updatePreviewTile(Game& game) {
     sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
@@ -437,11 +481,7 @@ void LevelCreator::render(Game& game) {
             break;
     }
 
-    // Draw the help text with background
-    sf::RectangleShape helpTextBackground(sf::Vector2f(helpText.getLocalBounds().width + 10, helpText.getLocalBounds().height + 10));
-    helpTextBackground.setPosition(helpText.getPosition().x - 5, helpText.getPosition().y - 5);
-    helpTextBackground.setFillColor(sf::Color(0, 0, 0, 150));
-    game.window.draw(helpTextBackground);
+    // Zeichne den Hilfetext ohne Hintergrund
     game.window.draw(helpText);
 
     if (showExplanation) {
@@ -459,7 +499,7 @@ void LevelCreator::renderEditState(Game& game) {
     drawPlacedTiles(game);
     updatePreviewTile(game);
 
-    // Compute bounding rectangle of tile selection sprites
+    // Berechne das umgebende Rechteck der Tile-Auswahl-Sprites
     if (!tileSelectionSprites.empty()) {
         sf::FloatRect boundingRect = tileSelectionSprites[0].getGlobalBounds();
         for (const auto& sprite : tileSelectionSprites) {
@@ -476,42 +516,81 @@ void LevelCreator::renderEditState(Game& game) {
             boundingRect.height = bottom - top;
         }
 
-        // Create background rectangle similar to helpText
+        // Erstelle Hintergrundrechteck ähnlich dem Hilfetext
         sf::RectangleShape tileSelectionBackground(sf::Vector2f(boundingRect.width + 20, boundingRect.height + 20));
         tileSelectionBackground.setPosition(boundingRect.left - 10, boundingRect.top - 10);
         tileSelectionBackground.setFillColor(sf::Color(0, 0, 0, 150));
         game.window.draw(tileSelectionBackground);
     }
 
-    // Draw the Tile Selection UI
+    // Zeichne die Tile-Auswahl-UI
     for (const auto& sprite : tileSelectionSprites) {
         game.window.draw(sprite);
     }
-    // Draw the borders
+    // Zeichne die Ränder
     for (const auto& border : tileSelectionBorders) {
         game.window.draw(border);
     }
 
-    // Draw the Preview Tile
+    // Zeichne das Vorschau-Tile
     if (selectedTile != -1) {
         game.window.draw(previewTile);
     }
-}
 
+    // Zeichne den Spawnpoint, falls vorhanden
+    if (hasSpawnPoint) {
+        // Zeichne einen hellgrünen Kreis an der Spawnpoint-Position
+        sf::CircleShape spawnPointCircle(5.f);
+        spawnPointCircle.setFillColor(sf::Color(0, 255, 0)); // Hellgrün
+        spawnPointCircle.setOrigin(5.f, 5.f);
+        spawnPointCircle.setPosition(spawnPointPosition);
+
+        game.window.draw(spawnPointCircle);
+
+        // Zeichne einen Pfeil, der die Spawnpoint-Richtung anzeigt
+        if (spawnPointDirection != sf::Vector2f(0.f, 0.f)) {
+            sf::Vector2f normalizedDir = spawnPointDirection;
+            float length = std::sqrt(normalizedDir.x * normalizedDir.x + normalizedDir.y * normalizedDir.y);
+            if (length != 0.f) {
+                normalizedDir /= length;
+            }
+
+            sf::Vector2f endPoint = spawnPointPosition + normalizedDir * 30.f; // Pfeillänge
+
+            // Zeichne den Linienabschnitt des Pfeils
+            sf::Vertex line[] = {
+                sf::Vertex(spawnPointPosition, sf::Color(0, 255, 0)),
+                sf::Vertex(endPoint, sf::Color(0, 255, 0))
+            };
+            game.window.draw(line, 2, sf::Lines);
+
+            // Zeichne die Pfeilspitze
+            float arrowHeadSize = 10.f;
+            sf::Vector2f perp(-normalizedDir.y, normalizedDir.x); // Senkrechter Vektor
+
+            sf::Vertex arrowHead[] = {
+                sf::Vertex(endPoint, sf::Color(0, 255, 0)),
+                sf::Vertex(endPoint - normalizedDir * arrowHeadSize + perp * arrowHeadSize / 2.f, sf::Color(0, 255, 0)),
+                sf::Vertex(endPoint - normalizedDir * arrowHeadSize - perp * arrowHeadSize / 2.f, sf::Color(0, 255, 0))
+            };
+            game.window.draw(arrowHead, 3, sf::Triangles);
+        }
+    }
+}
 
 void LevelCreator::renderViewState(Game& game) {
     drawPlacedTiles(game);
-    // Implement additional rendering if needed
+    // Implementiere zusätzliche Rendering-Logik bei Bedarf
 }
 
 void LevelCreator::renderButtonsState(Game& game) {
     drawPlacedTiles(game);
-    // Implement additional rendering if needed
+    // Implementiere zusätzliche Rendering-Logik bei Bedarf
 }
 
 void LevelCreator::addTileAtMouse(Game& game) {
     if (selectedTile == -1) {
-        return; // No tile to place
+        return; // Kein Tile zum Platzieren
     }
 
     sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
@@ -570,21 +649,22 @@ void LevelCreator::drawExplanationScreen(Game& game) {
     sf::Text explanationText;
     explanationText.setFont(font);
     explanationText.setString(
-        "Welcome to the Level Editor!\n\n"
-        "Controls:\n"
-        "1 - Buttons Mode\n"
-        "2 - View Mode\n"
-        "3 - Edit Mode\n"
-        "Left Click - Place Tile\n"
-        "Right Click - Remove Tile / Toggle Favorite\n"
-        "Scroll - Change Tile\n"
-        "F - Toggle Favorite\n"
-        "Tab - Switch between Tiles and Favorites\n"
-        "C - Copy Tile\n"
-        "E - Toggle Tile Edit Mode\n"
-        "S - Save Level\n"
-        "Esc - Return to Menu\n\n"
-        "Press any key to start."
+        "Willkommen im Level Editor!\n\n"
+        "Steuerung:\n"
+        "1 - Buttons Modus\n"
+        "2 - View Modus\n"
+        "3 - Edit Modus\n"
+        "Linksklick - Tile platzieren\n"
+        "Rechtsklick - Tile entfernen / Favorit toggeln\n"
+        "Scrollen - Tile wechseln\n"
+        "F - Favorit toggeln\n"
+        "Tab - Zwischen Tiles und Favoriten wechseln\n"
+        "C - Tile kopieren\n"
+        "E - Tile Edit Modus wechseln\n"
+        "Mittlere Maustaste - Spawnpunkt setzen\n"
+        "S - Level speichern\n"
+        "Esc - Zurück zum Menü\n\n"
+        "Drücke eine beliebige Taste, um zu starten."
     );
     explanationText.setCharacterSize(24);
     explanationText.setFillColor(sf::Color::White);
@@ -620,7 +700,7 @@ void LevelCreator::drawInputBox(Game& game) {
     game.window.draw(promptText);
 
     if (!isSaving) {
-        // List existing levels
+        // Liste vorhandener Levels
         sf::Text levelsText;
         levelsText.setFont(font);
         levelsText.setCharacterSize(20);
@@ -652,6 +732,13 @@ void LevelCreator::saveLevelToCSV(const std::string& filename) {
 
     file << boundaries.x << "," << boundaries.y << std::endl;
 
+    // Speichere Spawnpoint-Daten
+    if (hasSpawnPoint) {
+        file << "SPAWN_POINT," << spawnPointPosition.x << "," << spawnPointPosition.y << ","
+             << spawnPointDirection.x << "," << spawnPointDirection.y << std::endl;
+    }
+
+    // Speichere Tile-Daten
     for (size_t i = 0; i < placedTileSprites.size(); ++i) {
         for (int j = 0; j < placedTileSprites[i].size(); ++j) {
             file << i << "," << j << "," << placedTileIDs[i][j] << std::endl;
@@ -675,7 +762,7 @@ void LevelCreator::loadLevelFromCSV(const std::string& filename, Game& game) {
         return;
     }
 
-    // Read boundaries
+    // Lese Grenzen
     std::string line;
     if (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -692,26 +779,46 @@ void LevelCreator::loadLevelFromCSV(const std::string& filename, Game& game) {
     placedTileIDs.resize(boundaries.x, std::vector<int>(boundaries.y, -1));
     placedTileSprites.resize(boundaries.x, std::vector<sf::Sprite>(boundaries.y));
 
-    // Read tiles
+    // Lese Tiles
     while (std::getline(file, line)) {
         std::stringstream ss(line);
-        std::string iStr, jStr, tileIDStr;
-        if (std::getline(ss, iStr, ',') && std::getline(ss, jStr, ',') && std::getline(ss, tileIDStr)) {
-            int i = std::stoi(iStr);
-            int j = std::stoi(jStr);
-            int tileID = std::stoi(tileIDStr);
+        std::string firstToken;
+        std::getline(ss, firstToken, ',');
 
-            if (i >= 0 && i < boundaries.x && j >= 0 && j < boundaries.y && tileID != -1) {
-                float x = i * game.getTileSize();
-                float y = j * game.getTileSize();
+        if (firstToken == "SPAWN_POINT") {
+            // Lese Spawnpoint-Daten
+            std::string xStr, yStr, dirXStr, dirYStr;
+            std::getline(ss, xStr, ',');
+            std::getline(ss, yStr, ',');
+            std::getline(ss, dirXStr, ',');
+            std::getline(ss, dirYStr);
 
-                sf::Sprite s;
-                s.setTexture(tiles[tileID].getTexture());
-                s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
-                s.setPosition(x, y);
+            spawnPointPosition.x = std::stof(xStr);
+            spawnPointPosition.y = std::stof(yStr);
+            spawnPointDirection.x = std::stof(dirXStr);
+            spawnPointDirection.y = std::stof(dirYStr);
+            hasSpawnPoint = true;
+        } else {
+            // Lese Tile-Daten
+            std::string iStr = firstToken;
+            std::string jStr, tileIDStr;
+            if (std::getline(ss, jStr, ',') && std::getline(ss, tileIDStr)) {
+                int i = std::stoi(iStr);
+                int j = std::stoi(jStr);
+                int tileID = std::stoi(tileIDStr);
 
-                placedTileIDs[i][j] = tileID;
-                placedTileSprites[i][j] = s;
+                if (i >= 0 && i < boundaries.x && j >= 0 && j < boundaries.y && tileID != -1) {
+                    float x = i * game.getTileSize();
+                    float y = j * game.getTileSize();
+
+                    sf::Sprite s;
+                    s.setTexture(tiles[tileID].getTexture());
+                    s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
+                    s.setPosition(x, y);
+
+                    placedTileIDs[i][j] = tileID;
+                    placedTileSprites[i][j] = s;
+                }
             }
         }
     }
