@@ -25,6 +25,7 @@ class Car {
 public:
     Car();
     void resetVelocity();
+    void setRotationAngle(float angle);
     void resetAngularAcceleration();
     void handleInput();
     void update(float dt);

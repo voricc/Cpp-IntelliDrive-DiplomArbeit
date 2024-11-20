@@ -42,6 +42,11 @@ private:
     std::vector<std::vector<sf::Sprite>> placedTileSprites;
     std::vector<Tile> tiles;
 
+    // Spawn point variables
+    sf::Vector2f spawnPointPosition;
+    sf::Vector2f spawnPointDirection;
+    bool hasSpawnPoint = false;
+
     void debugDrawing(Game& game);
     void initializeCar();
     void performRaycasts(Game& game);
