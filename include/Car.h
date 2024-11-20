@@ -11,9 +11,9 @@
 struct carData {
     std::string name;
     sf::Texture carTexture;
-    int MaxSpeed;
-    int Handling;
-    int Acceleration;
+    float MaxSpeed;
+    float Handling;
+    float Acceleration;
     float weight;
     float power;
     float torque;
