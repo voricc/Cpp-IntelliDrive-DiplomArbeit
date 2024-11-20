@@ -21,7 +21,7 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
     float denominator = (-s2.x * s1.y + s1.x * s2.y);
 
     if (fabs(denominator) < 1e-6) {
-        std::cerr << "[DEBUG] Lines are parallel or coincident.\n";
+      //  std::cerr << "[DEBUG] Lines are parallel or coincident.\n";
         return false;
     }
     s = (-s1.y * (p0.x - p2.x) + s1.x * (p0.y - p2.y)) / denominator;
@@ -29,7 +29,7 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
 
     if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
         intersectionPoint = p0 + (t * s1);
-        std::cout << "[DEBUG] Line intersection at (" << intersectionPoint.x << ", " << intersectionPoint.y << ")\n";
+        //std::cout << "[DEBUG] Line intersection at (" << intersectionPoint.x << ", " << intersectionPoint.y << ")\n";
         return true;
     }
 
@@ -37,18 +37,17 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
 }
 
 GameState::GameState(Game& game, const std::string& levelFile) : car(game.getCar()) {
+    ResourceManager& resourceManager = ResourceManager::getInstance();
     std::cout << "[DEBUG] Initializing GameState\n";
-    initializeCar();
-    initialiazeRays();
     placedTileSprites.clear();
     placedTileIDs.clear();
-
-    ResourceManager& resourceManager = ResourceManager::getInstance();
     std::cout << "[DEBUG] Loading tiles from CSV\n";
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
-    GameStateBackground(game);
     loadLevelFromCSV(levelFile, game);
+    initializeCar();
+    initialiazeRays();
+    GameStateBackground(game);
 }
 
 void GameState::GameStateBackground(Game& game)
@@ -96,7 +95,6 @@ void GameState::handleInput(Game& game) {
 }
 
 void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
-
     std::cout << "[DEBUG] Level loading from file: " << filename << "\n";
 
     std::ifstream file(filename);
@@ -109,50 +107,68 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
 
     while (std::getline(file, line)) {
         std::stringstream ss(line);
-        char comma;
-        int x, y;
 
-        // std::cout << "idx: " << idx << "\n";
+        if (idx == 0) {
+            // Read boundaries
+            std::string xStr, yStr;
+            if (std::getline(ss, xStr, ',') && std::getline(ss, yStr)) {
+                boundaries.x = std::stoi(xStr);
+                boundaries.y = std::stoi(yStr);
+                std::cout << "[DEBUG] Level boundaries: x=" << boundaries.x << ", y=" << boundaries.y << "\n";
 
-        if(idx == 0){
-            ss >> x >> comma >> y;
-            std::cout << "[DEBUG] Level boundaries: x=" << x << ", y=" << y << "\n";
-
-            // read the boundaries from the file
-            boundaries = {x, y};
-
-            // Resize the vectors so they contain the necessary number of elements
-            placedTileIDs.resize(x, std::vector<int>(y, -1));
-            placedTileSprites.resize(x, std::vector<sf::Sprite>(y));
-        }else{
-            int texture;
-
-            ss >> x >> comma >> y >> comma >> texture;
-
-            //  std::cout << "pos: [" << x << "/" << y << "], texture: " << texture << "\n";
-
-            if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y){
-                std::cerr << "[DEBUG] The file seems to be corrupt! Tile position out of bounds at idx " << idx << "\n";
-                return; // Return because the tiles are out of bounds!
+                // Resize the vectors so they contain the necessary number of elements
+                placedTileIDs.resize(boundaries.x, std::vector<int>(boundaries.y, -1));
+                placedTileSprites.resize(boundaries.x, std::vector<sf::Sprite>(boundaries.y));
             }
+        } else {
+            // Check if line starts with "SPAWN_POINT"
+            if (line.substr(0, 11) == "SPAWN_POINT") {
+                // Parse spawn point data
+                std::string label;
+                std::getline(ss, label, ','); // Discard "SPAWN_POINT"
 
-            if (texture < 0 || texture >= tiles.size()) {
-                std::cerr << "[DEBUG] Invalid texture index: " << texture << " at idx " << idx << "\n";
-                continue; // Skip invalid texture
+                std::string posXStr, posYStr, dirXStr, dirYStr;
+                if (std::getline(ss, posXStr, ',') && std::getline(ss, posYStr, ',') &&
+                    std::getline(ss, dirXStr, ',') && std::getline(ss, dirYStr)) {
+                    spawnPointPosition.x = std::stof(posXStr);
+                    spawnPointPosition.y = std::stof(posYStr);
+                    spawnPointDirection.x = std::stof(dirXStr);
+                    spawnPointDirection.y = std::stof(dirYStr);
+                    hasSpawnPoint = true;
+                    std::cout << "[DEBUG] Spawn point loaded: position (" << spawnPointPosition.x << ", " << spawnPointPosition.y << "), direction (" << spawnPointDirection.x << ", " << spawnPointDirection.y << ")\n";
+                }
+            } else {
+                // Parse tile data
+                std::string xStr, yStr, textureStr;
+                if (std::getline(ss, xStr, ',') && std::getline(ss, yStr, ',') && std::getline(ss, textureStr)) {
+                    int x = std::stoi(xStr);
+                    int y = std::stoi(yStr);
+                    int texture = std::stoi(textureStr);
+
+                    if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y){
+                        std::cerr << "[DEBUG] The file seems to be corrupt! Tile position out of bounds at idx " << idx << "\n";
+                        return; // Return because the tiles are out of bounds!
+                    }
+
+                    if (texture < 0 || texture >= tiles.size()) {
+                        continue; // Skip invalid texture
+                    }
+
+                    sf::Sprite s;
+                    s.setTexture(tiles[texture].getTexture());
+                    s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
+                    s.setPosition(game.getTileSize() * x, game.getTileSize() * y);
+
+                    placedTileSprites[x][y] = s;
+                    placedTileIDs[x][y] = texture;
+                }
             }
-
-            sf::Sprite s;
-            s.setTexture(tiles[texture].getTexture());
-            s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
-            s.setPosition(game.getTileSize() * x, game.getTileSize() * y);
-
-            placedTileSprites[x][y] = s;
-            placedTileIDs[x][y] = texture;
         }
         idx++;
     }
     std::cout << "[DEBUG] Level loaded successfully\n";
 }
+
 
 void GameState::initialiazeRays() {
     std::cout << "[DEBUG] Initializing rays\n";
@@ -165,7 +181,7 @@ void GameState::performRaycasts(Game& game) {
     float rotation_angle = car.getRotationAngle();
     sf::Vector2f carPosition = car.getCurrentPosition();
 
-    std::cout << "[DEBUG] Performing raycasts. Car rotation angle: " << rotation_angle << "\n";
+   // std::cout << "[DEBUG] Performing raycasts. Car rotation angle: " << rotation_angle << "\n";
 
     std::vector<float> rayAngles = {
         rotation_angle - 90.0f,
@@ -336,12 +352,28 @@ void GameState::initializeCar() {
     std::cout << "[DEBUG] Initializing car\n";
     sf::Sprite &carSprite = car.getCarSprite();
     carSprite.setOrigin(carSprite.getLocalBounds().width / 2, carSprite.getLocalBounds().height / 2);
-    carSprite.setPosition(400, 400);
-    car.resetVelocity();
-    car.resetAngularAcceleration();
-    car.resetRotationAngle();
-    car.setPreviousPosition({carSprite.getPosition().x, carSprite.getPosition().y});
-    car.setCurrentPosition({carSprite.getPosition().x, carSprite.getPosition().y});
+
+    if (hasSpawnPoint) {
+        std::cout << "[DEBUG] Setting car position and rotation from spawn point\n";
+        carSprite.setPosition(spawnPointPosition);
+        car.resetVelocity();
+        car.resetAngularAcceleration();
+
+        // Calculate rotation angle from direction vector
+        float angle = std::atan2(spawnPointDirection.y, spawnPointDirection.x) * 180.f / M_PI + 90.f;
+        car.setRotationAngle(angle);
+
+        car.setPreviousPosition(spawnPointPosition);
+        car.setCurrentPosition(spawnPointPosition);
+    } else {
+        std::cout << "[DEBUG] No spawn point data, using default position\n";
+        carSprite.setPosition(400, 400); // Default position
+        car.resetVelocity();
+        car.resetAngularAcceleration();
+        car.resetRotationAngle();
+        car.setPreviousPosition({carSprite.getPosition().x, carSprite.getPosition().y});
+        car.setCurrentPosition({carSprite.getPosition().x, carSprite.getPosition().y});
+    }
 }
 
 bool GameState::isPauseKeyPressed(const sf::Event& event) const {

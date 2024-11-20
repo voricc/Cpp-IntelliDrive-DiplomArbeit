@@ -25,6 +25,7 @@ class Car {
 public:
     Car();
     void resetVelocity();
+    void setRotationAngle(float angle);
     void resetAngularAcceleration();
     void handleInput();
     void update(float dt);
@@ -37,7 +38,7 @@ public:
     sf::Sprite& getCarSprite();
     void setPreviousPosition(const sf::Vector2f& position);
     void setCurrentPosition(const sf::Vector2f& position);
-    
+
     sf::Vector2f velocity;
 private:
     sf::Sprite carSprite;
