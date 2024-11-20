@@ -29,6 +29,7 @@ Car::Car()
       handlingValue(5.0f),
       accelerationValue(5.0f)
 {
+
 }
 
 void Car::handleInput() {
@@ -101,6 +102,7 @@ void Car::resetRotationAngle() {
 
 void Car::render(sf::RenderWindow& window) {
     window.draw(carSprite);
+    carSprite.setScale(0.35f, 0.35f);
 }
 
 sf::FloatRect Car::getBounds() const {
