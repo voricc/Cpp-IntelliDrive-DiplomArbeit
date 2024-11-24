@@ -21,7 +21,6 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
     float denominator = (-s2.x * s1.y + s1.x * s2.y);
 
     if (fabs(denominator) < 1e-6) {
-      //  std::cerr << "[DEBUG] Lines are parallel or coincident.\n";
         return false;
     }
     s = (-s1.y * (p0.x - p2.x) + s1.x * (p0.y - p2.y)) / denominator;
@@ -29,7 +28,6 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
 
     if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
         intersectionPoint = p0 + (t * s1);
-        //std::cout << "[DEBUG] Line intersection at (" << intersectionPoint.x << ", " << intersectionPoint.y << ")\n";
         return true;
     }
 
@@ -109,24 +107,19 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
         std::stringstream ss(line);
 
         if (idx == 0) {
-            // Read boundaries
             std::string xStr, yStr;
             if (std::getline(ss, xStr, ',') && std::getline(ss, yStr)) {
                 boundaries.x = std::stoi(xStr);
                 boundaries.y = std::stoi(yStr);
                 std::cout << "[DEBUG] Level boundaries: x=" << boundaries.x << ", y=" << boundaries.y << "\n";
 
-                // Resize the vectors so they contain the necessary number of elements
                 placedTileIDs.resize(boundaries.x, std::vector<int>(boundaries.y, -1));
                 placedTileSprites.resize(boundaries.x, std::vector<sf::Sprite>(boundaries.y));
             }
         } else {
-            // Check if line starts with "SPAWN_POINT"
             if (line.substr(0, 11) == "SPAWN_POINT") {
-                // Parse spawn point data
                 std::string label;
-                std::getline(ss, label, ','); // Discard "SPAWN_POINT"
-
+                std::getline(ss, label, ',');
                 std::string posXStr, posYStr, dirXStr, dirYStr;
                 if (std::getline(ss, posXStr, ',') && std::getline(ss, posYStr, ',') &&
                     std::getline(ss, dirXStr, ',') && std::getline(ss, dirYStr)) {
@@ -138,7 +131,6 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
                     std::cout << "[DEBUG] Spawn point loaded: position (" << spawnPointPosition.x << ", " << spawnPointPosition.y << "), direction (" << spawnPointDirection.x << ", " << spawnPointDirection.y << ")\n";
                 }
             } else {
-                // Parse tile data
                 std::string xStr, yStr, textureStr;
                 if (std::getline(ss, xStr, ',') && std::getline(ss, yStr, ',') && std::getline(ss, textureStr)) {
                     int x = std::stoi(xStr);
@@ -147,11 +139,11 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
 
                     if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y){
                         std::cerr << "[DEBUG] The file seems to be corrupt! Tile position out of bounds at idx " << idx << "\n";
-                        return; // Return because the tiles are out of bounds!
+                        return;
                     }
 
                     if (texture < 0 || texture >= tiles.size()) {
-                        continue; // Skip invalid texture
+                        continue;
                     }
 
                     sf::Sprite s;
@@ -169,7 +161,6 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
     std::cout << "[DEBUG] Level loaded successfully\n";
 }
 
-
 void GameState::initialiazeRays() {
     std::cout << "[DEBUG] Initializing rays\n";
     rayDistances.resize(5, 0.0f);
@@ -177,11 +168,22 @@ void GameState::initialiazeRays() {
     collisionMarkers.reserve(5);
 }
 
+bool GameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon) {
+    int i, j, nvert = polygon.getPointCount();
+    bool c = false;
+    for (i = 0, j = nvert - 1; i < nvert; j = i++) {
+        sf::Vector2f pi = polygon.getTransform().transformPoint(polygon.getPoint(i));
+        sf::Vector2f pj = polygon.getTransform().transformPoint(polygon.getPoint(j));
+        if ( ((pi.y > point.y) != (pj.y > point.y)) &&
+            (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x) )
+            c = !c;
+    }
+    return c;
+}
+
 void GameState::performRaycasts(Game& game) {
     float rotation_angle = car.getRotationAngle();
     sf::Vector2f carPosition = car.getCurrentPosition();
-
-   // std::cout << "[DEBUG] Performing raycasts. Car rotation angle: " << rotation_angle << "\n";
 
     std::vector<float> rayAngles = {
         rotation_angle - 90.0f,
@@ -192,14 +194,13 @@ void GameState::performRaycasts(Game& game) {
     };
 
     for (auto& angle : rayAngles) {
-        if (angle < 0.0f) angle += 360.0f;
-        if (angle >= 360.0f) angle -= 360.0f;
+        angle = fmod(angle + 360.0f, 360.0f);
     }
 
     float maxRayLength = 1000000.0f;
-
     collisionMarkers.clear();
 
+    int tileSize = game.getTileSize();
     for (size_t i = 0; i < rayAngles.size(); ++i) {
         float angle = rayAngles[i];
         float radian_angle = angle * (M_PI / 180.0f);
@@ -210,29 +211,35 @@ void GameState::performRaycasts(Game& game) {
         float minDistance = maxRayLength;
         sf::Vector2f closestPoint = rayEnd;
 
-        for (const auto& wall : walls) {
-            sf::FloatRect wallBounds = wall.getGlobalBounds();
+        // Loop over all tiles
+        for (int x = 0; x < boundaries.x; ++x) {
+            for (int y = 0; y < boundaries.y; ++y) {
+                int tileID = placedTileIDs[x][y];
+                if (tileID < 0) continue;
 
-            sf::Vector2f p1(wallBounds.left, wallBounds.top);
-            sf::Vector2f p2(wallBounds.left + wallBounds.width, wallBounds.top);
-            sf::Vector2f p3(wallBounds.left + wallBounds.width, wallBounds.top + wallBounds.height);
-            sf::Vector2f p4(wallBounds.left, wallBounds.top + wallBounds.height);
+                Tile& tile = tiles[tileID];
+                const sf::ConvexShape& collisionShape = tile.collisionShape;
 
-            std::vector<std::pair<sf::Vector2f, sf::Vector2f>> edges = {
-                {p1, p2},
-                {p2, p3},
-                {p3, p4},
-                {p4, p1}
-            };
+                sf::Sprite& tileSprite = placedTileSprites[x][y];
 
-            for (const auto& edge : edges) {
-                sf::Vector2f intersectionPoint;
-                if (getLineIntersection(carPosition, rayEnd, edge.first, edge.second, intersectionPoint)) {
-                    float distance = sqrtf((intersectionPoint.x - carPosition.x) * (intersectionPoint.x - carPosition.x) +
-                                           (intersectionPoint.y - carPosition.y) * (intersectionPoint.y - carPosition.y));
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestPoint = intersectionPoint;
+                // Get the combined transform
+                sf::Transform combinedTransform = tileSprite.getTransform() * collisionShape.getTransform();
+
+                size_t pointCount = collisionShape.getPointCount();
+                for (size_t j = 0; j < pointCount; ++j) {
+                    sf::Vector2f p1 = combinedTransform.transformPoint(collisionShape.getPoint(j));
+                    sf::Vector2f p2 = combinedTransform.transformPoint(collisionShape.getPoint((j + 1) % pointCount));
+
+                    sf::Vector2f intersectionPoint;
+                    if (getLineIntersection(carPosition, rayEnd, p1, p2, intersectionPoint)) {
+                        float distance = sqrtf(
+                            (intersectionPoint.x - carPosition.x) * (intersectionPoint.x - carPosition.x) +
+                            (intersectionPoint.y - carPosition.y) * (intersectionPoint.y - carPosition.y)
+                        );
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestPoint = intersectionPoint;
+                        }
                     }
                 }
             }
@@ -247,23 +254,11 @@ void GameState::performRaycasts(Game& game) {
         ray[1].color = sf::Color(0, 255, 0, 255);
         rays[i] = ray;
 
-        sf::VertexArray collisionMarker(sf::Lines, 4);
-
-        float markerSize = 15.0f;
-
-        sf::Color markerColor(0, 255, 80, 255); // RGBA: Grey with 50% transparency
-
-        collisionMarker[0].position = closestPoint + sf::Vector2f(-markerSize, -markerSize);
-        collisionMarker[0].color = markerColor;
-        collisionMarker[1].position = closestPoint + sf::Vector2f(markerSize, markerSize);
-        collisionMarker[1].color = markerColor;
-
-        collisionMarker[2].position = closestPoint + sf::Vector2f(markerSize, -markerSize);
-        collisionMarker[2].color = markerColor;
-        collisionMarker[3].position = closestPoint + sf::Vector2f(-markerSize, markerSize);
-        collisionMarker[3].color = markerColor;
-
-        collisionMarkers.push_back(collisionMarker);
+        collisionMarkers.emplace_back();
+        sf::CircleShape& marker = collisionMarkers.back();
+        marker.setRadius(5);
+        marker.setPosition(closestPoint - sf::Vector2f(5, 5));
+        marker.setFillColor(sf::Color::Red);
     }
 }
 
@@ -271,58 +266,66 @@ void GameState::update(Game& game) {
     car.update(game.dt);
     performRaycasts(game);
 
-    /*
-    timeSinceLastPrint += game.dt;
-    if (timeSinceLastPrint >= 1.0f) {
-        std::cout << "Ray distances: ";
-        for (size_t i = 0; i < rayDistances.size(); ++i) {
-            std::cout << rayDistances[i] << " ";
+    // Get the car's transformed points
+    sf::Transform carTransform = car.getCarSprite().getTransform();
+    sf::FloatRect carLocalBounds = car.getCarSprite().getLocalBounds();
+
+    std::vector<sf::Vector2f> carPoints(4);
+    carPoints[0] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left, carLocalBounds.top));
+    carPoints[1] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left + carLocalBounds.width, carLocalBounds.top));
+    carPoints[2] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left + carLocalBounds.width, carLocalBounds.top + carLocalBounds.height));
+    carPoints[3] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left, carLocalBounds.top + carLocalBounds.height));
+
+    bool allPointsOnRoad = true;
+
+    for (const auto& point : carPoints) {
+        bool pointOnRoad = false;
+
+        // Determine which tile the point is over
+        int tileSize = game.getTileSize();
+        sf::Vector2i pointTilePosition(
+            static_cast<int>(point.x / tileSize),
+            static_cast<int>(point.y / tileSize)
+        );
+
+        // Search neighboring tiles
+        int searchRadius = 1;
+        for (int dx = -searchRadius; dx <= searchRadius; ++dx) {
+            for (int dy = -searchRadius; dy <= searchRadius; ++dy) {
+                int x = pointTilePosition.x + dx;
+                int y = pointTilePosition.y + dy;
+
+                if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y)
+                    continue;
+
+                int tileID = placedTileIDs[x][y];
+                if (tileID < 0) continue;
+
+                Tile& tile = tiles[tileID];
+                const sf::ConvexShape& collisionShape = tile.collisionShape;
+
+                sf::Sprite& tileSprite = placedTileSprites[x][y];
+
+                sf::Transform combinedTransform = tileSprite.getTransform() * collisionShape.getTransform();
+
+                if (isPointInPolygon(point, collisionShape, combinedTransform)) {
+                    pointOnRoad = true;
+                    break;
+                }
+            }
+            if (pointOnRoad) break;
         }
-        std::cout << std::endl;
 
-        timeSinceLastPrint = 0.0f;
-    }
-    */
-
-    sf::FloatRect carBounds = car.getBounds();
-
-    for (const auto& wall : walls) {
-        if (carBounds.intersects(wall.getGlobalBounds())) {
-            std::cout << "[DEBUG] Car collided with wall\n";
-            game.changeState(std::make_shared<DeathState>());
-            return;
+        if (!pointOnRoad) {
+            allPointsOnRoad = false;
+            break; // One point is off the road
         }
     }
-}
 
-void GameState::debugDrawing(Game& game) {
-    walls.clear();
-
-    float thickness = 5.0f;
-    sf::Vector2u windowSize = game.window.getSize();
-
-    sf::RectangleShape topWall(sf::Vector2f(windowSize.x, thickness));
-    topWall.setPosition(0, 0);
-    topWall.setFillColor(sf::Color::Red);
-    walls.push_back(topWall);
-
-    sf::RectangleShape bottomWall(sf::Vector2f(windowSize.x, thickness));
-    bottomWall.setPosition(0, windowSize.y - thickness);
-    bottomWall.setFillColor(sf::Color::Red);
-    walls.push_back(bottomWall);
-
-    sf::RectangleShape leftWall(sf::Vector2f(thickness, windowSize.y));
-    leftWall.setPosition(0, 0);
-    leftWall.setFillColor(sf::Color::Red);
-    walls.push_back(leftWall);
-
-    sf::RectangleShape rightWall(sf::Vector2f(thickness, windowSize.y));
-    rightWall.setPosition(windowSize.x - thickness, 0);
-    rightWall.setFillColor(sf::Color::Red);
-    walls.push_back(rightWall);
-
-    for (const auto& wall : walls) {
-        game.window.draw(wall);
+    if (!allPointsOnRoad) {
+        std::cout << "[DEBUG] Car is off the road\n";
+        game.changeState(std::make_shared<DeathState>());
+        return;
     }
 }
 
@@ -341,11 +344,9 @@ void GameState::render(Game& game) {
         game.window.draw(ray);
     }
 
-    for (const auto& collisionMarker : collisionMarkers) {
-        game.window.draw(collisionMarker);
+    for (const auto& marker : collisionMarkers) {
+        game.window.draw(marker);
     }
-
-    debugDrawing(game);
 }
 
 void GameState::initializeCar() {
@@ -359,7 +360,6 @@ void GameState::initializeCar() {
         car.resetVelocity();
         car.resetAngularAcceleration();
 
-        // Calculate rotation angle from direction vector
         float angle = std::atan2(spawnPointDirection.y, spawnPointDirection.x) * 180.f / M_PI + 90.f;
         car.setRotationAngle(angle);
 
@@ -367,7 +367,7 @@ void GameState::initializeCar() {
         car.setCurrentPosition(spawnPointPosition);
     } else {
         std::cout << "[DEBUG] No spawn point data, using default position\n";
-        carSprite.setPosition(400, 400); // Default position
+        carSprite.setPosition(400, 400);
         car.resetVelocity();
         car.resetAngularAcceleration();
         car.resetRotationAngle();
@@ -385,4 +385,17 @@ sf::RectangleShape GameState::createRoad(Game& game) const {
     road.setPosition(10, 10);
     road.setFillColor(sf::Color{80, 80, 80});
     return road;
+}
+
+bool GameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon, const sf::Transform& transform) {
+    int i, j, nvert = polygon.getPointCount();
+    bool c = false;
+    for (i = 0, j = nvert - 1; i < nvert; j = i++) {
+        sf::Vector2f pi = transform.transformPoint(polygon.getPoint(i));
+        sf::Vector2f pj = transform.transformPoint(polygon.getPoint(j));
+        if ( ((pi.y > point.y) != (pj.y > point.y)) &&
+            (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x) )
+            c = !c;
+    }
+    return c;
 }

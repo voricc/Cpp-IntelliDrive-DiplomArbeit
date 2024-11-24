@@ -33,26 +33,26 @@ private:
 
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
-    std::vector<sf::VertexArray> collisionMarkers;
-    std::vector<sf::RectangleShape> walls;
+    std::vector<sf::CircleShape> collisionMarkers;
 
-    sf::Vector2i boundaries; // How many tiles can be placed on the x -and y-axis
+    sf::Vector2i boundaries;
 
     std::vector<std::vector<int>> placedTileIDs;
     std::vector<std::vector<sf::Sprite>> placedTileSprites;
     std::vector<Tile> tiles;
 
-    // Spawn point variables
     sf::Vector2f spawnPointPosition;
     sf::Vector2f spawnPointDirection;
     bool hasSpawnPoint = false;
 
-    void debugDrawing(Game& game);
     void initializeCar();
     void performRaycasts(Game& game);
     void initialiazeRays();
     bool isPauseKeyPressed(const sf::Event& event) const;
     sf::RectangleShape createRoad(Game& game) const;
+    bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon, const sf::Transform& transform);
+
+    bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon);
 };
 
 #endif // GAMESTATE_H

@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME} ${ALL_SOURCE_FILES} ${ALL_HEADER_FILES}
         include/LevelSelectState.h
         include/Tile.h
         src/Tile.cpp
+        src/GameState.cpp
 )
 
 # Use C++17 standards
