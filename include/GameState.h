@@ -44,6 +44,7 @@ private:
     sf::Vector2f spawnPointPosition;
     sf::Vector2f spawnPointDirection;
     bool hasSpawnPoint = false;
+    float debugTimer = 0.0f;
 
     void initializeCar();
     void performRaycasts(Game& game);

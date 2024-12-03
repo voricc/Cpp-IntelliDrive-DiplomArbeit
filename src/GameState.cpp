@@ -185,6 +185,7 @@ void GameState::performRaycasts(Game& game) {
     float rotation_angle = car.getRotationAngle();
     sf::Vector2f carPosition = car.getCurrentPosition();
 
+    // Define the angles for the rays relative to the car's rotation
     std::vector<float> rayAngles = {
         rotation_angle - 90.0f,
         rotation_angle + 90.0f,
@@ -193,78 +194,123 @@ void GameState::performRaycasts(Game& game) {
         rotation_angle + 45.0f
     };
 
+    // Normalize angles between 0 and 360 degrees
     for (auto& angle : rayAngles) {
         angle = fmod(angle + 360.0f, 360.0f);
     }
 
-    float maxRayLength = 1000000.0f;
     collisionMarkers.clear();
+    rays.clear();
 
+    sf::Vector2u windowSize = game.window.getSize();
     int tileSize = game.getTileSize();
+
     for (size_t i = 0; i < rayAngles.size(); ++i) {
         float angle = rayAngles[i];
         float radian_angle = angle * (M_PI / 180.0f);
         sf::Vector2f direction(std::sin(radian_angle), -std::cos(radian_angle));
 
-        sf::Vector2f rayEnd = carPosition + direction * maxRayLength;
+        sf::Vector2f rayStart = carPosition;
+        sf::Vector2f rayEnd = carPosition;
 
-        float minDistance = maxRayLength;
-        sf::Vector2f closestPoint = rayEnd;
+        float stepSize = 5.0f; // Adjust step size for accuracy and performance
 
-        // Loop over all tiles
-        for (int x = 0; x < boundaries.x; ++x) {
-            for (int y = 0; y < boundaries.y; ++y) {
-                int tileID = placedTileIDs[x][y];
-                if (tileID < 0) continue;
+        bool rayTerminated = false;
 
-                Tile& tile = tiles[tileID];
-                const sf::ConvexShape& collisionShape = tile.collisionShape;
+        while (!rayTerminated) {
+            rayEnd += direction * stepSize;
 
-                sf::Sprite& tileSprite = placedTileSprites[x][y];
+            // Check if rayEnd is outside window bounds
+            if (rayEnd.x < 0 || rayEnd.x >= windowSize.x || rayEnd.y < 0 || rayEnd.y >= windowSize.y) {
+                rayTerminated = true;
+                break;
+            }
 
-                // Get the combined transform
-                sf::Transform combinedTransform = tileSprite.getTransform() * collisionShape.getTransform();
+            // Determine which tile the rayEnd is over
+            int tileX = static_cast<int>(rayEnd.x / tileSize);
+            int tileY = static_cast<int>(rayEnd.y / tileSize);
 
-                size_t pointCount = collisionShape.getPointCount();
-                for (size_t j = 0; j < pointCount; ++j) {
-                    sf::Vector2f p1 = combinedTransform.transformPoint(collisionShape.getPoint(j));
-                    sf::Vector2f p2 = combinedTransform.transformPoint(collisionShape.getPoint((j + 1) % pointCount));
+            // Check if tileX and tileY are within boundaries
+            if (tileX < 0 || tileX >= boundaries.x || tileY < 0 || tileY >= boundaries.y) {
+                rayTerminated = true;
+                break;
+            }
 
-                    sf::Vector2f intersectionPoint;
-                    if (getLineIntersection(carPosition, rayEnd, p1, p2, intersectionPoint)) {
-                        float distance = sqrtf(
-                            (intersectionPoint.x - carPosition.x) * (intersectionPoint.x - carPosition.x) +
-                            (intersectionPoint.y - carPosition.y) * (intersectionPoint.y - carPosition.y)
-                        );
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            closestPoint = intersectionPoint;
-                        }
-                    }
-                }
+            int tileID = placedTileIDs[tileX][tileY];
+
+            // If there is no tile at this position, terminate the ray
+            if (tileID == -1) {
+                rayTerminated = true;
+                break;
+            }
+
+            // Get the tile and its collision shape
+            Tile& tile = tiles[tileID];
+            const sf::ConvexShape& collisionShape = tile.collisionShape;
+            sf::Sprite& tileSprite = placedTileSprites[tileX][tileY];
+
+            // Apply the tile sprite's transform to the collision shape
+            sf::Transform combinedTransform = tileSprite.getTransform();
+
+            // Check if the point is within the collision shape of the tile
+            if (!isPointInPolygon(rayEnd, collisionShape, combinedTransform)) {
+                // The point is in a transparent area (e.g., outside the road), terminate the ray
+                rayTerminated = true;
+                break;
+            }
+
+            // Optional: To prevent the ray from getting stuck due to minimal movement, add a maximum length
+            float distance = sqrtf(
+                (rayEnd.x - carPosition.x) * (rayEnd.x - carPosition.x) +
+                (rayEnd.y - carPosition.y) * (rayEnd.y - carPosition.y)
+            );
+            if (distance >= 10000.0f) { // Adjust maximum length as needed
+                rayTerminated = true;
+                break;
             }
         }
 
-        rayDistances[i] = minDistance;
+        float distance = sqrtf(
+            (rayEnd.x - carPosition.x) * (rayEnd.x - carPosition.x) +
+            (rayEnd.y - carPosition.y) * (rayEnd.y - carPosition.y)
+        );
+        rayDistances[i] = distance;
 
+        // Create the ray visual representation
         sf::VertexArray ray(sf::Lines, 2);
         ray[0].position = carPosition;
         ray[0].color = sf::Color(0, 255, 0, 255);
-        ray[1].position = closestPoint;
+        ray[1].position = rayEnd;
         ray[1].color = sf::Color(0, 255, 0, 255);
-        rays[i] = ray;
+        rays.push_back(ray);
 
+        // Add a marker at the collision point
         collisionMarkers.emplace_back();
         sf::CircleShape& marker = collisionMarkers.back();
         marker.setRadius(5);
-        marker.setPosition(closestPoint - sf::Vector2f(5, 5));
+        marker.setPosition(rayEnd - sf::Vector2f(5, 5));
         marker.setFillColor(sf::Color::Red);
     }
 }
 
+
 void GameState::update(Game& game) {
     car.update(game.dt);
     performRaycasts(game);
+
+
+    debugTimer += game.dt;
+    if (debugTimer >= 1.0f) {
+        // Print ray distances
+        std::cout << "[DEBUG] Ray lengths: ";
+        for (size_t i = 0; i < rayDistances.size(); ++i) {
+            std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
+        }
+        std::cout << "\n";
+
+        // Reset the timer
+        debugTimer = 0.0f;
+    }
 
     // Get the car's transformed points
     sf::Transform carTransform = car.getCarSprite().getTransform();
@@ -332,9 +378,24 @@ void GameState::update(Game& game) {
 void GameState::render(Game& game) {
     game.window.clear();
     game.window.draw(backgroundSprite);
-    for (const auto &tileX : placedTileSprites) {
-        for(const auto &tileY : tileX) {
-            game.window.draw(tileY);
+    for (int x = 0; x < boundaries.x; ++x) {
+        for (int y = 0; y < boundaries.y; ++y) {
+            game.window.draw(placedTileSprites[x][y]);
+
+            int tileID = placedTileIDs[x][y];
+            if (tileID >= 0) {
+                Tile& tile = tiles[tileID];
+                sf::ConvexShape collisionShape = tile.collisionShape;
+
+                // Set visual properties for debugging
+                collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
+                collisionShape.setOutlineColor(sf::Color::Red);
+                collisionShape.setOutlineThickness(1.0f);
+
+                // Apply the tile's transform
+                sf::Transform transform = placedTileSprites[x][y].getTransform();
+                game.window.draw(collisionShape, transform);
+            }
         }
     }
 
@@ -393,8 +454,8 @@ bool GameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShap
     for (i = 0, j = nvert - 1; i < nvert; j = i++) {
         sf::Vector2f pi = transform.transformPoint(polygon.getPoint(i));
         sf::Vector2f pj = transform.transformPoint(polygon.getPoint(j));
-        if ( ((pi.y > point.y) != (pj.y > point.y)) &&
-            (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x) )
+        if (((pi.y > point.y) != (pj.y > point.y)) &&
+            (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x))
             c = !c;
     }
     return c;

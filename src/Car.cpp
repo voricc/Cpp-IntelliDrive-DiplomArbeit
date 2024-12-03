@@ -8,9 +8,9 @@
 
 constexpr float PI = 3.14159265f;
 
-constexpr float MAX_ACCELERATION_CONSTANT = 1000.0f; // Units: pixels per second squared
+constexpr float MAX_ACCELERATION_CONSTANT = 800.0f; // Units: pixels per second squared
 constexpr float MAX_ANGULAR_ACCELERATION_CONSTANT = 200.0f; // Units: degrees per second squared
-constexpr float MAX_SPEED = 300.0f; // Units: pixels per second
+constexpr float MAX_SPEED = 450.0f; // Units: pixels per second
 constexpr float ROTATIONAL_SPEED_MULTIPLIER = 0.00425;
 constexpr float ANGULAR_DAMPING_MULTIPLIER = 0.99;
 
