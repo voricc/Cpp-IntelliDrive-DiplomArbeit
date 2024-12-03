@@ -8,7 +8,6 @@
 #include "../include/Car.h"
 #include "../include/Game.h"
 
-int debug = 0;
 
 #define M_PI 3.141592653589793238462643383279502884197169399375105820974944
 bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,

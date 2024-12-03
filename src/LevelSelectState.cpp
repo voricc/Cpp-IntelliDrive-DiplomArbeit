@@ -3,6 +3,8 @@
 //
 
 #include "../include/LevelSelectState.h"
+
+#include "AiGameState.h"
 #include "../include/GameState.h"
 #include "../include/ResourceManager.h"
 
@@ -67,7 +69,7 @@ void LevelSelectState::handleInput(Game& game) {
                 if (i + currentPage * levelsPerPage >= levelFiles.size()) break;
                 if (levelButtons[i].getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                     std::string selectedLevel = "resources/Levels/" + levelFiles[i + currentPage * levelsPerPage];
-                    game.changeState(std::make_shared<GameState>(game, selectedLevel));
+                    game.changeState(std::make_shared<AiGameState>(game, selectedLevel));
                 }
             }
 

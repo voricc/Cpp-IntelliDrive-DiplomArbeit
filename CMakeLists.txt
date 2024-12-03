@@ -25,6 +25,8 @@ add_executable(${PROJECT_NAME} ${ALL_SOURCE_FILES} ${ALL_HEADER_FILES}
         include/Tile.h
         src/Tile.cpp
         src/GameState.cpp
+        src/AiGameState.cpp
+        include/AiGameState.h
 )
 
 # Use C++17 standards
