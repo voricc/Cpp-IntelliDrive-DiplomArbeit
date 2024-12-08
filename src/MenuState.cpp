@@ -5,6 +5,7 @@
 #include "../include/MenuState.h"
 #include "CarChooseState.h"
 #include "LevelSelectState.h"
+#include "SettingsState.h"
 #include "../include/GameState.h"
 #include "../include/ResourceManager.h"
 
@@ -58,6 +59,8 @@ void MenuState::handleMouseInput(Game& game) {
             game.changeState(std::make_shared<CarChoosingState>());
         } else if (levelEditorButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
             game.changeState(std::make_shared<LevelCreator>(game));
+        } else if (systemButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+            game.changeState(std::make_shared<SettingsState>());
         } else if (exitButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
             game.window.close();
         } else if (changeBgButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {

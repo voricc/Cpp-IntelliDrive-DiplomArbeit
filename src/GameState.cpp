@@ -3,13 +3,16 @@
 //
 
 #include "../include/GameState.h"
+#include "../include/SettingsManager.h"
 #include "../include/PauseState.h"
 #include "../include/DeathState.h"
 #include "../include/Car.h"
 #include "../include/Game.h"
 
-
 #define M_PI 3.141592653589793238462643383279502884197169399375105820974944
+
+bool debugMode = SettingsManager::getInstance().getDebugMode();
+
 bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
                          sf::Vector2f p2, sf::Vector2f p3,
                          sf::Vector2f& intersectionPoint) {
@@ -35,13 +38,14 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
 
 GameState::GameState(Game& game, const std::string& levelFile) : car(game.getCar()) {
     ResourceManager& resourceManager = ResourceManager::getInstance();
-    std::cout << "[DEBUG] Initializing GameState\n";
+    std::cout << "[DEBUG] Initializing GameStatee\n";
     placedTileSprites.clear();
     placedTileIDs.clear();
     std::cout << "[DEBUG] Loading tiles from CSV\n";
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
     loadLevelFromCSV(levelFile, game);
+
     initializeCar();
     initialiazeRays();
     GameStateBackground(game);
@@ -276,19 +280,21 @@ void GameState::performRaycasts(Game& game) {
         rayDistances[i] = distance;
 
         // Create the ray visual representation
-        sf::VertexArray ray(sf::Lines, 2);
-        ray[0].position = carPosition;
-        ray[0].color = sf::Color(0, 255, 0, 255);
-        ray[1].position = rayEnd;
-        ray[1].color = sf::Color(0, 255, 0, 255);
-        rays.push_back(ray);
+        if (debugMode == true) {
+            sf::VertexArray ray(sf::Lines, 2);
+            ray[0].position = carPosition;
+            ray[0].color = sf::Color(0, 255, 0, 255);
+            ray[1].position = rayEnd;
+            ray[1].color = sf::Color(0, 255, 0, 255);
+            rays.push_back(ray);
 
-        // Add a marker at the collision point
-        collisionMarkers.emplace_back();
-        sf::CircleShape& marker = collisionMarkers.back();
-        marker.setRadius(5);
-        marker.setPosition(rayEnd - sf::Vector2f(5, 5));
-        marker.setFillColor(sf::Color::Red);
+            // Add a marker at the collision point
+            collisionMarkers.emplace_back();
+            sf::CircleShape& marker = collisionMarkers.back();
+            marker.setRadius(5);
+            marker.setPosition(rayEnd - sf::Vector2f(5, 5));
+            marker.setFillColor(sf::Color::Red);
+        }
     }
 }
 
@@ -297,13 +303,14 @@ void GameState::update(Game& game) {
     car.update(game.dt);
     performRaycasts(game);
 
+    std::cout << "[DEBUG] Debug Mode: " << debugMode << "\n";
 
     debugTimer += game.dt;
     if (debugTimer >= 1.0f) {
         // Print ray distances
-        std::cout << "[DEBUG] Ray lengths: ";
+       // std::cout << "[DEBUG] Ray lengths: ";
         for (size_t i = 0; i < rayDistances.size(); ++i) {
-            std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
+       //     std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
         }
         std::cout << "\n";
 
@@ -386,7 +393,9 @@ void GameState::render(Game& game) {
                 Tile& tile = tiles[tileID];
                 sf::ConvexShape collisionShape = tile.collisionShape;
 
-                // Set visual properties for debugging
+            // Set visual properties for debugging
+            if (debugMode == true)
+                {
                 collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
                 collisionShape.setOutlineColor(sf::Color::Red);
                 collisionShape.setOutlineThickness(1.0f);
@@ -394,6 +403,7 @@ void GameState::render(Game& game) {
                 // Apply the tile's transform
                 sf::Transform transform = placedTileSprites[x][y].getTransform();
                 game.window.draw(collisionShape, transform);
+                }
             }
         }
     }
