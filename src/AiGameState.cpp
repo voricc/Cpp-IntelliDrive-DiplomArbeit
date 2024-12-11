@@ -35,6 +35,7 @@ bool AiGameState::getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
 }
 
 AiGameState::AiGameState(Game& game, const std::string& levelFile) : car(game.getCar()) {
+    std::cout << "HAllio\n";
     ResourceManager& resourceManager = ResourceManager::getInstance();
     std::cout << "[DEBUG] Initializing GameState\n";
     placedTileSprites.clear();

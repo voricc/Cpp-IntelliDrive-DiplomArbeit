@@ -42,6 +42,7 @@ GameState::GameState(Game& game, const std::string& levelFile) : car(game.getCar
     placedTileSprites.clear();
     placedTileIDs.clear();
     std::cout << "[DEBUG] Loading tiles from CSV\n";
+    std::cout << " TEST";
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
     loadLevelFromCSV(levelFile, game);
@@ -49,6 +50,8 @@ GameState::GameState(Game& game, const std::string& levelFile) : car(game.getCar
     initializeCar();
     initialiazeRays();
     GameStateBackground(game);
+
+    std::cout << "Debug mode: " << debugMode << "\n";
 }
 
 void GameState::GameStateBackground(Game& game)

@@ -7,19 +7,20 @@
 #include "SettingsManager.h"
 #include <fstream>
 #include <json.hpp>
+
+bool SettingsManager::ai_mode = false;
+std::string SettingsManager::units = "Metric";
+std::string SettingsManager::display_mode = "fullscreen";
+std::string SettingsManager::resolution = "1920x1080";
+bool SettingsManager::vsync = false;
+int SettingsManager::fps_limit = 120;
+bool SettingsManager::debug_mode = false;
+bool SettingsManager::fps_counter = false;
+std::string SettingsManager::metrics_mode = "simple";
+
 using json = nlohmann::json;
 
-SettingsManager::SettingsManager() {
-    ai_mode = false;
-    units = "Metric";
-    display_mode = "fullscreen";
-    resolution = "1920x1080";
-    vsync = false;
-    fps_limit = 120;
-    debug_mode = false;
-    fps_counter = false;
-    metrics_mode = "simple";
-}
+SettingsManager::SettingsManager() { }
 
 SettingsManager& SettingsManager::getInstance() {
     static SettingsManager instance;
@@ -56,29 +57,29 @@ void SettingsManager::save(const std::string& path) {
     out << j.dump(4);
 }
 
-bool SettingsManager::getAIMode() const { return ai_mode; }
+bool SettingsManager::getAIMode() { return ai_mode; }
 void SettingsManager::setAIMode(bool v) { ai_mode = v; }
 
-std::string SettingsManager::getUnits() const { return units; }
+std::string SettingsManager::getUnits() { return units; }
 void SettingsManager::setUnits(const std::string& u) { units = u; }
 
-std::string SettingsManager::getDisplayMode() const { return display_mode; }
+std::string SettingsManager::getDisplayMode() { return display_mode; }
 void SettingsManager::setDisplayMode(const std::string& m) { display_mode = m; }
 
-std::string SettingsManager::getResolution() const { return resolution; }
+std::string SettingsManager::getResolution() { return resolution; }
 void SettingsManager::setResolution(const std::string& r) { resolution = r; }
 
-bool SettingsManager::getVSync() const { return vsync; }
+bool SettingsManager::getVSync() { return vsync; }
 void SettingsManager::setVSync(bool v) { vsync = v; }
 
-int SettingsManager::getFPSLimit() const { return fps_limit; }
+int SettingsManager::getFPSLimit() { return fps_limit; }
 void SettingsManager::setFPSLimit(int f) { fps_limit = f; }
 
-bool SettingsManager::getDebugMode() const { return debug_mode; }
+bool SettingsManager::getDebugMode() { return debug_mode; }
 void SettingsManager::setDebugMode(bool v) { debug_mode = v; }
 
-bool SettingsManager::getFPSCounter() const { return fps_counter; }
+bool SettingsManager::getFPSCounter() { return fps_counter; }
 void SettingsManager::setFPSCounter(bool v) { fps_counter = v; }
 
-std::string SettingsManager::getMetricsMode() const { return metrics_mode; }
+std::string SettingsManager::getMetricsMode() { return metrics_mode; }
 void SettingsManager::setMetricsMode(const std::string& m) { metrics_mode = m; }
