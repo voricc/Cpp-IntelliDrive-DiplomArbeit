@@ -32,23 +32,22 @@ Car::Car()
 
 }
 
-void Car::handleInput() {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-        acceleration = acceleration_constant;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-        acceleration = -acceleration_constant;
-    } else {
-        acceleration = 0.0f;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-        angular_acceleration = -angular_acceleration_constant;
-    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-        angular_acceleration = angular_acceleration_constant;
-    } else {
-        angular_acceleration = 0.0f;
-    }
+void Car::setAcceleration(float value) {
+    acceleration = value;
 }
+
+void Car::setAngularAcceleration(float value) {
+    angular_acceleration = value;
+}
+
+float Car::getAccelerationConstant() const {
+    return acceleration_constant;
+}
+
+float Car::getAngularAccelerationConstant() const {
+    return angular_acceleration_constant;
+}
+
 
 void Car::resetVelocity() {
     velocity.x = 0.0f;

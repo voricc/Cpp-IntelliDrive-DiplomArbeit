@@ -95,8 +95,25 @@ void GameState::handleInput(Game& game) {
             game.pushState(std::make_shared<PauseState>());
         }
     }
-    car.handleInput();
+
+    // Handle car movement input
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+        car.setAcceleration(car.getAccelerationConstant());
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+        car.setAcceleration(-car.getAccelerationConstant());
+    } else {
+        car.setAcceleration(0.0f);
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+        car.setAngularAcceleration(-car.getAngularAccelerationConstant());
+    } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+        car.setAngularAcceleration(car.getAngularAccelerationConstant());
+    } else {
+        car.setAngularAcceleration(0.0f);
+    }
 }
+
 
 void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
     std::cout << "[DEBUG] Level loading from file: " << filename << "\n";
