@@ -1,19 +1,17 @@
 //
-// Created by Voric and tobisdev on 11/08/2024.
+// Created by Devrim on 03.12.2024.
 //
 
-#include "../include/GameState.h"
-#include "../include/SettingsManager.h"
+#include "../include/AiGameState.h"
 #include "../include/PauseState.h"
 #include "../include/DeathState.h"
 #include "../include/Car.h"
 #include "../include/Game.h"
 
+int debug = 0;
+
 #define M_PI 3.141592653589793238462643383279502884197169399375105820974944
-
-bool debugMode = SettingsManager::getInstance().getDebugMode();
-
-bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
+bool AiGameState::getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
                          sf::Vector2f p2, sf::Vector2f p3,
                          sf::Vector2f& intersectionPoint) {
     sf::Vector2f s1 = p1 - p0;
@@ -36,25 +34,22 @@ bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
     return false;
 }
 
-GameState::GameState(Game& game, const std::string& levelFile) : car(game.getCar()) {
+AiGameState::AiGameState(Game& game, const std::string& levelFile) : car(game.getCar()) {
+    std::cout << "HAllio\n";
     ResourceManager& resourceManager = ResourceManager::getInstance();
-    std::cout << "[DEBUG] Initializing GameStatee\n";
+    std::cout << "[DEBUG] Initializing GameState\n";
     placedTileSprites.clear();
     placedTileIDs.clear();
     std::cout << "[DEBUG] Loading tiles from CSV\n";
-    std::cout << " TEST";
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
     loadLevelFromCSV(levelFile, game);
-
     initializeCar();
     initialiazeRays();
     GameStateBackground(game);
-
-    std::cout << "Debug mode: " << debugMode << "\n";
 }
 
-void GameState::GameStateBackground(Game& game)
+void AiGameState::GameStateBackground(Game& game)
 {
     ResourceManager &resourceManager = ResourceManager::getInstance();
 
@@ -83,7 +78,7 @@ void GameState::GameStateBackground(Game& game)
     );
 }
 
-void GameState::handleInput(Game& game) {
+void AiGameState::handleInput(Game& game) {
     sf::Event event;
     while (game.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -98,7 +93,7 @@ void GameState::handleInput(Game& game) {
     car.handleInput();
 }
 
-void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
+void AiGameState::loadLevelFromCSV(const std::string& filename, Game &game) {
     std::cout << "[DEBUG] Level loading from file: " << filename << "\n";
 
     std::ifstream file(filename);
@@ -167,14 +162,14 @@ void GameState::loadLevelFromCSV(const std::string& filename, Game &game) {
     std::cout << "[DEBUG] Level loaded successfully\n";
 }
 
-void GameState::initialiazeRays() {
+void AiGameState::initialiazeRays() {
     std::cout << "[DEBUG] Initializing rays\n";
     rayDistances.resize(5, 0.0f);
     rays.resize(5);
     collisionMarkers.reserve(5);
 }
 
-bool GameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon) {
+bool AiGameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon) {
     int i, j, nvert = polygon.getPointCount();
     bool c = false;
     for (i = 0, j = nvert - 1; i < nvert; j = i++) {
@@ -187,7 +182,7 @@ bool GameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShap
     return c;
 }
 
-void GameState::performRaycasts(Game& game) {
+void AiGameState::performRaycasts(Game& game) {
     float rotation_angle = car.getRotationAngle();
     sf::Vector2f carPosition = car.getCurrentPosition();
 
@@ -283,37 +278,34 @@ void GameState::performRaycasts(Game& game) {
         rayDistances[i] = distance;
 
         // Create the ray visual representation
-        if (debugMode == true) {
-            sf::VertexArray ray(sf::Lines, 2);
-            ray[0].position = carPosition;
-            ray[0].color = sf::Color(0, 255, 0, 255);
-            ray[1].position = rayEnd;
-            ray[1].color = sf::Color(0, 255, 0, 255);
-            rays.push_back(ray);
+        sf::VertexArray ray(sf::Lines, 2);
+        ray[0].position = carPosition;
+        ray[0].color = sf::Color(0, 255, 0, 255);
+        ray[1].position = rayEnd;
+        ray[1].color = sf::Color(0, 255, 0, 255);
+        rays.push_back(ray);
 
-            // Add a marker at the collision point
-            collisionMarkers.emplace_back();
-            sf::CircleShape& marker = collisionMarkers.back();
-            marker.setRadius(5);
-            marker.setPosition(rayEnd - sf::Vector2f(5, 5));
-            marker.setFillColor(sf::Color::Red);
-        }
+        // Add a marker at the collision point
+        collisionMarkers.emplace_back();
+        sf::CircleShape& marker = collisionMarkers.back();
+        marker.setRadius(5);
+        marker.setPosition(rayEnd - sf::Vector2f(5, 5));
+        marker.setFillColor(sf::Color::Red);
     }
 }
 
 
-void GameState::update(Game& game) {
+void AiGameState::update(Game& game) {
     car.update(game.dt);
     performRaycasts(game);
 
-    std::cout << "[DEBUG] Debug Mode: " << debugMode << "\n";
 
     debugTimer += game.dt;
     if (debugTimer >= 1.0f) {
         // Print ray distances
-       // std::cout << "[DEBUG] Ray lengths: ";
+        std::cout << "[DEBUG] Ray lengths: ";
         for (size_t i = 0; i < rayDistances.size(); ++i) {
-       //     std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
+            std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
         }
         std::cout << "\n";
 
@@ -384,7 +376,7 @@ void GameState::update(Game& game) {
     }
 }
 
-void GameState::render(Game& game) {
+void AiGameState::render(Game& game) {
     game.window.clear();
     game.window.draw(backgroundSprite);
     for (int x = 0; x < boundaries.x; ++x) {
@@ -396,9 +388,7 @@ void GameState::render(Game& game) {
                 Tile& tile = tiles[tileID];
                 sf::ConvexShape collisionShape = tile.collisionShape;
 
-            // Set visual properties for debugging
-            if (debugMode == true)
-                {
+                // Set visual properties for debugging
                 collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
                 collisionShape.setOutlineColor(sf::Color::Red);
                 collisionShape.setOutlineThickness(1.0f);
@@ -406,7 +396,6 @@ void GameState::render(Game& game) {
                 // Apply the tile's transform
                 sf::Transform transform = placedTileSprites[x][y].getTransform();
                 game.window.draw(collisionShape, transform);
-                }
             }
         }
     }
@@ -422,7 +411,7 @@ void GameState::render(Game& game) {
     }
 }
 
-void GameState::initializeCar() {
+void AiGameState::initializeCar() {
     std::cout << "[DEBUG] Initializing car\n";
     sf::Sprite &carSprite = car.getCarSprite();
     carSprite.setOrigin(carSprite.getLocalBounds().width / 2, carSprite.getLocalBounds().height / 2);
@@ -449,18 +438,18 @@ void GameState::initializeCar() {
     }
 }
 
-bool GameState::isPauseKeyPressed(const sf::Event& event) const {
+bool AiGameState::isPauseKeyPressed(const sf::Event& event) const {
     return (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P);
 }
 
-sf::RectangleShape GameState::createRoad(Game& game) const {
+sf::RectangleShape AiGameState::createRoad(Game& game) const {
     sf::RectangleShape road(sf::Vector2f(game.window.getSize().x - 20, game.window.getSize().y - 20));
     road.setPosition(10, 10);
     road.setFillColor(sf::Color{80, 80, 80});
     return road;
 }
 
-bool GameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon, const sf::Transform& transform) {
+bool AiGameState::isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon, const sf::Transform& transform) {
     int i, j, nvert = polygon.getPointCount();
     bool c = false;
     for (i = 0, j = nvert - 1; i < nvert; j = i++) {

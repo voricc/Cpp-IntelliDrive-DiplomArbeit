@@ -5,6 +5,7 @@
 #include "../include/MenuState.h"
 #include "CarChooseState.h"
 #include "LevelSelectState.h"
+#include "SettingsState.h"
 #include "../include/GameState.h"
 #include "../include/ResourceManager.h"
 
@@ -34,7 +35,7 @@ MenuState::MenuState()
     initializeText(changeBgButton, Textfont, "Change Background", 30, 150, defaultWindowSize.y - 30);
     initializeText(title, Menufont, "INTELLIDRIVE", 200, defaultWindowSize.x / 2.0f, defaultWindowSize.y / 4.0f + 100.f);
 
-    initializeText(versionText, Textfont, "Beta v1.8.11", 20, defaultWindowSize.x - 150, defaultWindowSize.y - 100);
+    initializeText(versionText, Textfont, "Beta v1.9.7", 20, defaultWindowSize.x - 150, defaultWindowSize.y - 100);
 }
 
 void MenuState::handleInput(Game& game) {
@@ -58,6 +59,8 @@ void MenuState::handleMouseInput(Game& game) {
             game.changeState(std::make_shared<CarChoosingState>());
         } else if (levelEditorButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
             game.changeState(std::make_shared<LevelCreator>(game));
+        } else if (systemButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
+            game.changeState(std::make_shared<SettingsState>());
         } else if (exitButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
             game.window.close();
         } else if (changeBgButton.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {

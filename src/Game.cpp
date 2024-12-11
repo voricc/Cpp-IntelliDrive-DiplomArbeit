@@ -9,7 +9,7 @@
 Game::Game() : window(sf::VideoMode(1920, 1080), "IntelliDrive", sf::Style::Fullscreen)
 {
     car = {};
-    loadCarData("resources/cars.csv");
+    loadCarData("resources/config/cars.csv");
     car.applyData(cars[0]);
     pushState(std::make_shared<MenuState>());
 

@@ -1,35 +1,37 @@
-//
-// Created by Tobias on 15.10.2024.
-//
+    //
+    // Created by Tobias on 15.10.2024.
+    //
 
-#ifndef INTELLIDRIVE_TILE_H
-#define INTELLIDRIVE_TILE_H
+    #ifndef INTELLIDRIVE_TILE_H
+    #define INTELLIDRIVE_TILE_H
 
-#include "SFML/Graphics.hpp"
-#include "iostream"
+    #include "SFML/Graphics.hpp"
+    #include "iostream"
 
-class Tile {
+    class Tile {
 
-private:
-    sf::Texture texture;
-    std::string texturePath;
-    std::vector<sf::Vector2f> collisionPolygon;
-public:
-    Tile() = default;
-    explicit Tile(std::string path);
-    ~Tile() = default;
+    private:
+        sf::Texture texture;
+        std::string texturePath;
+        std::vector<sf::Vector2f> collisionPolygon;
 
-    [[ nodiscard ]] sf::Texture& getTexture() { return texture; }
-    [[ nodiscard ]] const std::vector<sf::Vector2f>& getCollisionPolygon() const { return collisionPolygon; }
-    [[ nodiscard ]] const std::string &getTexturePath() const { return texturePath; }
+    public:
+        Tile() = default;
+        explicit Tile(std::string path);
+        ~Tile() = default;
 
-    void setTexturePath(const std::string& path);
+        sf::ConvexShape collisionShape;
+        void initializeCollisionShape();
 
-    void addCollisionPoint(const sf::Vector2f& point);
-    void removeCollisionPoint(const int idx);
-    void deletePolygon();
+        [[nodiscard]] sf::Texture& getTexture() { return texture; }
+        [[nodiscard]] const std::vector<sf::Vector2f>& getCollisionPolygon() const { return collisionPolygon; }
+        [[nodiscard]] const std::string& getTexturePath() const { return texturePath; }
 
-};
+        void setTexturePath(const std::string& path);
 
-#endif //INTELLIDRIVE_TILE_H
+        void addCollisionPoint(const sf::Vector2f& point);
+        void removeCollisionPoint(const int idx);
+        void deletePolygon();
+    };
 
+    #endif //INTELLIDRIVE_TILE_H

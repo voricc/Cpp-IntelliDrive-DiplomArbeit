@@ -3,6 +3,8 @@
 //
 
 #include "../include/LevelSelectState.h"
+
+#include "AiGameState.h"
 #include "../include/GameState.h"
 #include "../include/ResourceManager.h"
 

@@ -1,9 +1,12 @@
 //
-// Created by Voric and tobisdev on 11/08/2024.
+// Created by Devrim on 03.12.2024.
 //
 
-#ifndef GAMESTATE_H
-#define GAMESTATE_H
+#ifndef AIGAMESTATE_H
+#define AIGAMESTATE_H
+
+
+
 
 #include "../include/State.h"
 #include "../include/Car.h"
@@ -11,12 +14,14 @@
 #include "../include/ResourceManager.h"
 #include <cmath>
 
-class GameState : public State {
+class AiGameState : public State {
 public:
-    GameState(Game& game, const std::string& levelFile);
+    bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3,
+                             sf::Vector2f& intersectionPoint);
+    AiGameState(Game& game, const std::string& levelFile);
     void GameStateBackground(Game& game);
 
-    GameState(Game& game) : car(game.getCar()) {
+    AiGameState(Game& game) : car(game.getCar()) {
         initializeCar();
     }
 
@@ -56,4 +61,6 @@ private:
     bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon);
 };
 
-#endif // GAMESTATE_H
+
+
+#endif //AIGAMESTATE_H
