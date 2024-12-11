@@ -1,58 +1,80 @@
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.26)
 project(IntelliDrive VERSION 0.1.0)
 
-# Set C++ standard to C++20
-set(CMAKE_CXX_STANDARD 20)
+# Set C++ standard to C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Set the output directory for binaries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin/)
+
+# Stellen Sie sicher, dass SFML als Shared Libraries gebaut wird
+set(SFML_BUILD_SHARED_LIBS TRUE CACHE BOOL "Build SFML as shared libraries" FORCE)
+
 # Build SFML
-add_subdirectory(vendors/sfml/)
+add_subdirectory(vendors/sfml/ vendors/sfml_build/)
 
-# Collect all the source and header files
-file(GLOB ALL_SOURCE_FILES src/*.cpp)
-file(GLOB ALL_HEADER_FILES include/*.hpp)
-
-# Add the main executable target
-add_executable(${PROJECT_NAME} ${ALL_SOURCE_FILES} ${ALL_HEADER_FILES}
+# Explicitly list all source files
+set(SOURCE_FILES
+        src/main.cpp
         src/CarChooseState.cpp
-        include/CarChooseState.h
         src/LevelCreator.cpp
-        include/LevelCreator.h
         src/LevelSelectState.cpp
-        include/LevelSelectState.h
-        include/Tile.h
         src/Tile.cpp
         src/GameState.cpp
         src/AiGameState.cpp
-        include/AiGameState.h
         src/SettingsState.cpp
-        include/SettingsState.h
-        include/SettingsManager.h
-        include/MetricsManager.h
         src/SettingsManager.cpp
         src/MetricsManager.cpp
         src/DropDown.cpp
-        include/DropDown.h
+        src/Game.cpp           # Hinzugefügt
+        src/Car.cpp            # Hinzugefügt
+        src/ResourceManager.cpp # Hinzugefügt
+        src/MenuState.cpp      # Hinzugefügt
+        src/PauseState.cpp     # Hinzugefügt
+        src/DeathState.cpp     # Hinzugefügt
+        # Füge hier weitere .cpp-Dateien hinzu, falls vorhanden
 )
 
-# Use C++17 standards
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+# Optional: Liste aller Header-Dateien auf (kann weggelassen werden)
+set(HEADER_FILES
+        include/CarChooseState.h
+        include/LevelCreator.h
+        include/LevelSelectState.h
+        include/Tile.h
+        include/AiGameState.h
+        include/SettingsState.h
+        include/SettingsManager.h
+        include/MetricsManager.h
+        include/DropDown.h
+        include/Game.h
+        include/Car.h
+        include/ResourceManager.h
+        include/MenuState.h     # Hinzugefügt
+        include/PauseState.h    # Hinzugefügt
+        include/DeathState.h    # Hinzugefügt
+        # Füge hier weitere .h/.hpp-Dateien hinzu, falls vorhanden
+)
 
-# Include directories for SFML and Box2D
-target_include_directories(
-        ${PROJECT_NAME}
-        PRIVATE ${PROJECT_SOURCE_DIR}/include/
-        PRIVATE ${PROJECT_SOURCE_DIR}/vendors/sfml/include/
-        PRIVATE ${PROJECT_SOURCE_DIR}/vendors/box2d/include/  # Include Box2D headers
+# Add the main executable target
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
+
+# Include directories for SFML
+target_include_directories(${PROJECT_NAME}
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/include/
+        ${PROJECT_SOURCE_DIR}/vendors/sfml/include/
+        # Falls du andere Abhängigkeiten hast, füge sie hier hinzu
 )
 
 # Link SFML libraries
-target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system)
-
-# Link Box2D static library
-target_link_libraries(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/vendors/bin3/libbox2d.a)
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        sfml-graphics
+        sfml-window
+        sfml-system
+        # Falls du weitere SFML-Module oder andere Bibliotheken verwendest, füge sie hier hinzu
+)
 
 # Define the resource directory
 set(RESOURCE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources)
@@ -61,56 +83,49 @@ set(RESOURCE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources)
 file(MAKE_DIRECTORY ${RESOURCE_DIR})
 
 # Get all files in the resources directory
-file(GLOB RESOURCE_FILES ${PROJECT_SOURCE_DIR}/resources/*)
+file(GLOB RESOURCE_FILES "${PROJECT_SOURCE_DIR}/resources/*")
 
 # Add custom command to copy resource files
 foreach(resource ${RESOURCE_FILES})
     get_filename_component(resource_name ${resource} NAME)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${resource} ${RESOURCE_DIR}/${resource_name}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${resource}" "${RESOURCE_DIR}/${resource_name}"
             COMMENT "Copying ${resource} to ${RESOURCE_DIR}/${resource_name}"
     )
 endforeach()
 
-# Copy necessary DLLs after the build
+# Copy necessary SFML DLLs after the build (für Visual Studio)
 if (WIN32)
-    # Define the path to the SFML and MinGW (GCC) DLLs
-    set(SFML_DLLS_DIR ${PROJECT_SOURCE_DIR}/vendors/bin)
-    set(GCC_DLLS_DIR ${PROJECT_SOURCE_DIR}/vendors/bin2)
-
-    # List of required DLLs
-    set(SFML_DLLS
-            "${SFML_DLLS_DIR}/sfml-graphics-2.dll"
-            "${SFML_DLLS_DIR}/sfml-window-2.dll"
-            "${SFML_DLLS_DIR}/sfml-system-2.dll"
+    # Verwende Generator Expressions, um die korrekten Pfade basierend auf der Build-Konfiguration zu referenzieren
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:sfml-graphics>"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sfml-graphics.dll"
+            COMMENT "Copying SFML DLL sfml-graphics.dll to output directory"
     )
-
-    set(GCC_DLLS
-            "${GCC_DLLS_DIR}/libgcc_s_seh-1.dll"
-            "${GCC_DLLS_DIR}/libstdc++-6.dll"
-            "${GCC_DLLS_DIR}/libwinpthread-1.dll"
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:sfml-window>"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sfml-window.dll"
+            COMMENT "Copying SFML DLL sfml-window.dll to output directory"
     )
-
-    # Add custom command to copy SFML DLLs
-    foreach(dll ${SFML_DLLS})
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll}" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-                COMMENT "Copying SFML DLL ${dll} to output directory"
-        )
-    endforeach()
-
-    # Add custom command to copy GCC DLLs
-    foreach(dll ${GCC_DLLS})
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll}" ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-                COMMENT "Copying GCC DLL ${dll} to output directory"
-        )
-    endforeach()
-
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:sfml-system>"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sfml-system.dll"
+            COMMENT "Copying SFML DLL sfml-system.dll to output directory"
+    )
 endif()
 
-# Copy the Box2D static library (.a) to the output directory
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/vendors/bin3/libbox2d.a ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        COMMENT "Copying Box2D static library to output directory"
-)
+# Optional: Set properties for Visual Studio to use multithreaded DLL runtime
+if (MSVC)
+    # Set runtime library to Multithreaded DLL (/MD)
+    foreach(flag_var
+            CMAKE_CXX_FLAGS
+            CMAKE_CXX_FLAGS_DEBUG
+            CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_CXX_FLAGS_MINSIZEREL
+            CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+        string(REPLACE "/MDd" "/MD" ${flag_var} "${${flag_var}}")
+    endforeach()
+endif()

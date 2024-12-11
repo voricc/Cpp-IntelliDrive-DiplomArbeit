@@ -1,6 +1,7 @@
 #include "../include/Tile.h"
 
 #include <cmath>
+#define M_PI 3.141592653589793238462643383279502884197169399375105820974944
 
 Tile::Tile(std::string path) {
     texturePath = path;
