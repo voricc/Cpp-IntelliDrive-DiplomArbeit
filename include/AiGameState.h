@@ -12,12 +12,21 @@
 #include <SFML/Graphics.hpp>
 #include "../vendors/ai/NeuralNetwork/NeuralNetwork.h"
 
-class AiGameState : public GameStateParent {
-private:
+struct Player {
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
     std::vector<sf::CircleShape> collisionMarkers;
+    bool isDead = false;
+    float points = 0.0f;
+    Car car;
+};
 
+class AiGameState : public GameStateParent {
+private:
+    std::vector<Player> players;
+
+    int networks = 50;
+    int raySize = 5;
     NeuralNetwork network;
 
     void initializeCar() override;

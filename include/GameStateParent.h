@@ -27,7 +27,6 @@
 
 class GameStateParent : public State {
 private:
-    Car &car;
     float timeSinceLastPrint = 0.0f;
     sf::Sprite backgroundSprite;
 
@@ -61,10 +60,9 @@ public:
     bool isPauseKeyPressed(const sf::Event& event) const;
 
     GameStateParent(Game& game, const std::string& levelFile);
-    explicit GameStateParent(Game& game) : car(game.getCar()) {};
+    explicit GameStateParent(Game& game) {};
 
     // Getter and Setter
-    Car &getCar() {return car;};
     float &getDebugTimer() {return debugTimer;};
     sf::Vector2i &getBoundaries() {return boundaries;};
     std::vector<std::vector<int>> &getPlacedTileIDs() {return this->placedTileIDs;};
@@ -76,7 +74,6 @@ public:
     bool getHasSpawnpoint() {return this->hasSpawnPoint;};
 
     void setDebugTimer(float val) {this->debugTimer = val;};
-    void setCar(Car &car) {this->car = car;};
 
 };
 

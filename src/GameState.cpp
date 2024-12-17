@@ -4,13 +4,12 @@
 
 # include "GameState.h"
 
-GameState::GameState(Game &game, const std::string &levelFile) : GameStateParent(game, levelFile) {
+GameState::GameState(Game &game, const std::string &levelFile) : car(game.getCar()), GameStateParent(game) {
     initializeCar();
     initializeRays();
 }
 
 void GameState::initializeCar() {
-    Car &car = this->getCar();
     bool hasSpawnPoint = this->getHasSpawnpoint();
     auto &spawnPointPosition = this->getSpawnPointPosition();
     auto &spawnPointDirection = this->getSpawnPointDirection();
@@ -50,7 +49,6 @@ void GameState::initializeRays() {
 }
 
 void GameState::performRaycasts(Game &game) {
-    Car &car = this->getCar();
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
@@ -170,7 +168,6 @@ void GameState::performRaycasts(Game &game) {
 }
 
 void GameState::render(Game &game) {
-    Car &car = this->getCar();
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &backgroundSprite = this->getBackgroundSprite();
     auto &placedTileIDs = this->getPlacedTileIDs();
@@ -215,7 +212,6 @@ void GameState::render(Game &game) {
 }
 
 void GameState::update(Game &game) {
-    Car &car = this->getCar();
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
@@ -301,8 +297,6 @@ void GameState::update(Game &game) {
 }
 
 void GameState::handleInput(Game &game) {
-    Car &car = this->getCar();
-
     sf::Event event;
     while (game.window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {

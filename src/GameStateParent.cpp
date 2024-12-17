@@ -124,7 +124,7 @@ void GameStateParent::loadBackground(Game &game) {
     );
 }
 
-GameStateParent::GameStateParent(Game &game, const std::string &levelFile) : car(game.getCar()) {
+GameStateParent::GameStateParent(Game &game, const std::string &levelFile) {
     ResourceManager& resourceManager = ResourceManager::getInstance();
     std::cout << "[DEBUG] Initializing GameStatee\n";
     placedTileSprites.clear();

@@ -13,6 +13,8 @@
 
 class GameState : public GameStateParent {
 private:
+    Car &car;
+
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
     std::vector<sf::CircleShape> collisionMarkers;
@@ -27,7 +29,7 @@ private:
 public:
     GameState(Game &game, const std::string &levelFile);
 
-    explicit GameState(Game &game) : GameStateParent(game) {
+    explicit GameState(Game &game) : car(game.getCar()), GameStateParent(game) {
         initializeCar();
     }
 };
