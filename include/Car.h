@@ -35,7 +35,7 @@ public:
     void setCurrentPosition(const sf::Vector2f& position);
     void setRotationAngle(float angle);
     sf::Sprite& getCarSprite();
-
+    void setPosition(const sf::Vector2f &position);
     // New setters and getters
     void setAcceleration(float value);
     void setAngularAcceleration(float value);

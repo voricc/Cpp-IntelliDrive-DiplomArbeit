@@ -157,3 +157,6 @@ void Car::setRotationAngle(float angle) {
 sf::Sprite& Car::getCarSprite() {
     return carSprite;
 }
+void Car::setPosition(const sf::Vector2f& position) {
+    carSprite.setPosition(position);
+}

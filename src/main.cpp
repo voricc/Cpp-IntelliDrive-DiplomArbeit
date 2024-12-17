@@ -7,7 +7,6 @@
 #include "../include/MenuState.h"
 
 int main() {
-    std::cout << "HALO!";
     SettingsManager::getInstance().load("resources/config/config.json");
     Game game;
     game.run();

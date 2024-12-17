@@ -42,12 +42,14 @@ void Game::run() {
         }
 
         if (auto currentState = getCurrentState()) {
+            std::cout << "updating state!\n";
             currentState->handleInput(*this);
             currentState->update(*this);
             window.clear();
             currentState->render(*this);
             //calculateAndDisplayFPS();
             window.display();
+            std::cout << "end updating state\n\n";
         }
     }
 }

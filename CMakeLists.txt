@@ -8,11 +8,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Set the output directory for binaries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin/)
 
-# Stellen Sie sicher, dass SFML als Shared Libraries gebaut wird
+# Ensure SFML builds as shared libraries
 set(SFML_BUILD_SHARED_LIBS TRUE CACHE BOOL "Build SFML as shared libraries" FORCE)
 
 # Build SFML
 add_subdirectory(vendors/sfml/ vendors/sfml_build/)
+
+# Find ArrayFire
+find_package(ArrayFire REQUIRED)
 
 # Explicitly list all source files
 set(SOURCE_FILES
@@ -27,16 +30,16 @@ set(SOURCE_FILES
         src/SettingsManager.cpp
         src/MetricsManager.cpp
         src/DropDown.cpp
-        src/Game.cpp           # Hinzugefügt
-        src/Car.cpp            # Hinzugefügt
-        src/ResourceManager.cpp # Hinzugefügt
-        src/MenuState.cpp      # Hinzugefügt
-        src/PauseState.cpp     # Hinzugefügt
-        src/DeathState.cpp     # Hinzugefügt
-        # Füge hier weitere .cpp-Dateien hinzu, falls vorhanden
+        src/Game.cpp
+        src/Car.cpp
+        src/ResourceManager.cpp
+        src/MenuState.cpp
+        src/PauseState.cpp
+        src/DeathState.cpp
+        vendors/ai/Utility/Utility.cpp
+        vendors/ai/NeuralNetwork/NeuralNetwork.cpp
 )
 
-# Optional: Liste aller Header-Dateien auf (kann weggelassen werden)
 set(HEADER_FILES
         include/CarChooseState.h
         include/LevelCreator.h
@@ -50,30 +53,40 @@ set(HEADER_FILES
         include/Game.h
         include/Car.h
         include/ResourceManager.h
-        include/MenuState.h     # Hinzugefügt
-        include/PauseState.h    # Hinzugefügt
-        include/DeathState.h    # Hinzugefügt
-        # Füge hier weitere .h/.hpp-Dateien hinzu, falls vorhanden
+        include/MenuState.h
+        include/PauseState.h
+        include/DeathState.h
+        vendors/ai/Utility/Utility.cpp
+        vendors/ai/NeuralNetwork/NeuralNetwork.cpp
+        src/GameStateParent.cpp
+        include/GameStateParent.h
+        include/GameStateParent.h
 )
 
 # Add the main executable target
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 
-# Include directories for SFML
+# Include directories
 target_include_directories(${PROJECT_NAME}
         PRIVATE
         ${PROJECT_SOURCE_DIR}/include/
         ${PROJECT_SOURCE_DIR}/vendors/sfml/include/
-        # Falls du andere Abhängigkeiten hast, füge sie hier hinzu
+        ${ArrayFire_INCLUDE_DIRS} # Include ArrayFire
 )
 
-# Link SFML libraries
+# Include directories
+include_directories(${AF_PATH}/include)
+
+# Link directories (if necessary)
+link_directories(${AF_PATH}/lib)
+
+# Link SFML and ArrayFire libraries
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
         sfml-graphics
         sfml-window
         sfml-system
-        # Falls du weitere SFML-Module oder andere Bibliotheken verwendest, füge sie hier hinzu
+        ${ArrayFire_LIBRARIES} # Link ArrayFire
 )
 
 # Define the resource directory
@@ -94,32 +107,27 @@ foreach(resource ${RESOURCE_FILES})
     )
 endforeach()
 
-# Copy necessary SFML DLLs after the build (für Visual Studio)
+# Copy necessary SFML DLLs after the build (for Windows)
 if (WIN32)
-    # Verwende Generator Expressions, um die korrekten Pfade basierend auf der Build-Konfiguration zu referenzieren
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:sfml-graphics>"
             "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sfml-graphics.dll"
-            COMMENT "Copying SFML DLL sfml-graphics.dll to output directory"
     )
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:sfml-window>"
             "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sfml-window.dll"
-            COMMENT "Copying SFML DLL sfml-window.dll to output directory"
     )
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:sfml-system>"
             "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sfml-system.dll"
-            COMMENT "Copying SFML DLL sfml-system.dll to output directory"
     )
 endif()
 
 # Optional: Set properties for Visual Studio to use multithreaded DLL runtime
 if (MSVC)
-    # Set runtime library to Multithreaded DLL (/MD)
     foreach(flag_var
             CMAKE_CXX_FLAGS
             CMAKE_CXX_FLAGS_DEBUG
