@@ -1,6 +1,7 @@
 //
 // Created by Voric and tobisdev on 11/08/2024.
 //
+
 # include "GameState.h"
 
 GameState::GameState(Game &game, const std::string &levelFile) : GameStateParent(game, levelFile) {
