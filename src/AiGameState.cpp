@@ -4,19 +4,19 @@
 
 # include "AiGameState.h"
 
-AiGameState::AiGameState(Game &game, const std::string &levelFile) : GameStateParent(game, levelFile) {
-    initializeCar();
-    initializeRays();
+AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
+    carTemplate = game.cars[0];
 
-    std::vector<int> topology = {5, 7, 2};
+    std::vector<int> topology = {5, 3, 2};
     std::vector<Utility::Activations> activations = {
             Utility::Activations::Tanh,
             Utility::Activations::Tanh
     };
-    int networks = 7;
 
-    Utility::setup();
     network = NeuralNetwork(topology, activations, -1.8f, +1.8f, true, networks);
+
+    this->initializeCar();
+    this->initializeRays();
 }
 
 void AiGameState::initializeCar() {
@@ -27,6 +27,9 @@ void AiGameState::initializeCar() {
     auto &spawnPointDirection = this->getSpawnPointDirection();
     for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
         Player player;
+        
+        player.car = {};
+        player.car.applyData(carTemplate);
         Car &car = player.car;
 
         sf::Sprite &carSprite = car.getCarSprite();
@@ -56,6 +59,9 @@ void AiGameState::initializeCar() {
 }
 
 void AiGameState::initializeRays() {
+    auto &rayAngles = this->getRayAngles();
+    int raySize = rayAngles.size();
+
     for (int playerIDX = 0; playerIDX < players.size(); ++playerIDX) {
         Player &player = players[playerIDX];
         player.rayDistances = std::vector<float>(raySize, 0.0f);
@@ -69,8 +75,11 @@ void AiGameState::performRaycasts(Game &game) {
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
+    bool debugMode = this->getDebugMode();
 
     for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+        auto rayAngles = this->getRayAngles();
+
         Player &player = players[playerIDX];
         Car &car = player.car;
         auto &collisionMarkers = player.collisionMarkers;
@@ -80,18 +89,9 @@ void AiGameState::performRaycasts(Game &game) {
         float rotation_angle = car.getRotationAngle();
         sf::Vector2f carPosition = car.getCurrentPosition();
 
-        // Define the angles for the rays relative to the car's rotation
-        std::vector<float> rayAngles = {
-                rotation_angle - 90.0f,
-                rotation_angle + 90.0f,
-                rotation_angle,
-                rotation_angle - 45.0f,
-                rotation_angle + 45.0f
-        };
-
         // Normalize angles between 0 and 360 degrees
         for (auto& angle : rayAngles) {
-            angle = fmod(angle + 360.0f, 360.0f);
+            angle = fmod(angle + rotation_angle + 360.0f, 360.0f);
         }
 
         collisionMarkers.clear();
@@ -111,7 +111,6 @@ void AiGameState::performRaycasts(Game &game) {
             float stepSize = 5.0f; // Adjust step size for accuracy and performance
 
             bool rayTerminated = false;
-
             while (!rayTerminated) {
                 rayEnd += direction * stepSize;
 
@@ -169,178 +168,236 @@ void AiGameState::performRaycasts(Game &game) {
                     (rayEnd.x - carPosition.x) * (rayEnd.x - carPosition.x) +
                     (rayEnd.y - carPosition.y) * (rayEnd.y - carPosition.y)
             );
-            rayDistances[playerIDX * raySize + i] = distance;
+            rayDistances[i] = distance;
+
+            // Create the ray visual representation
+            if (debugMode) {
+                sf::VertexArray ray(sf::Lines, 2);
+                ray[0].position = carPosition;
+                ray[0].color = sf::Color(0, 255, 0, 255);
+                ray[1].position = rayEnd;
+                ray[1].color = sf::Color(0, 255, 0, 255);
+                rays.push_back(ray);
+
+                // Add a marker at the collision point
+                collisionMarkers.emplace_back();
+                sf::CircleShape& marker = collisionMarkers.back();
+                marker.setRadius(5);
+                marker.setPosition(rayEnd - sf::Vector2f(5, 5));
+                marker.setFillColor(sf::Color::Red);
+            }
         }
     }
 }
 
 void AiGameState::render(Game &game) {
+    std::cout << "Rendering!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &backgroundSprite = this->getBackgroundSprite();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
+    bool debugMode = this->getDebugMode();
 
     game.window.clear();
     game.window.draw(backgroundSprite);
 
-    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
-        Player &player = players[playerIDX];
-        Car &car = player.car;
+    for (int x = 0; x < boundaries.x; ++x) {
+        for (int y = 0; y < boundaries.y; ++y) {
+            game.window.draw(placedTileSprites[x][y]);
 
-        for (int x = 0; x < boundaries.x; ++x) {
-            for (int y = 0; y < boundaries.y; ++y) {
-                game.window.draw(placedTileSprites[x][y]);
+            int tileID = placedTileIDs[x][y];
+            if (tileID >= 0) {
+                Tile &tile = tiles[tileID];
+                sf::ConvexShape collisionShape = tile.collisionShape;
 
-                int tileID = placedTileIDs[x][y];
-                if (tileID >= 0) {
-                    Tile &tile = tiles[tileID];
-                    sf::ConvexShape collisionShape = tile.collisionShape;
+                // Set visual properties for debugging
+                if (debugMode)
+                {
+                    collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
+                    collisionShape.setOutlineColor(sf::Color::Red);
+                    collisionShape.setOutlineThickness(1.0f);
 
-                    // Set visual properties for debugging
-//                if (debugMode == true)
-//                {
-//                    collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
-//                    collisionShape.setOutlineColor(sf::Color::Red);
-//                    collisionShape.setOutlineThickness(1.0f);
-//
-//                    // Apply the tile's transform
-//                    sf::Transform transform = placedTileSprites[x][y].getTransform();
-//                    game.window.draw(collisionShape, transform);
-//                }
+                    // Apply the tile's transform
+                    sf::Transform transform = placedTileSprites[x][y].getTransform();
+                    game.window.draw(collisionShape, transform);
                 }
             }
         }
-
-        car.render(game.window);
     }
 
+    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+        Player &player = players[playerIDX];
+        Car &car = player.car;
+        car.render(game.window);
 
-//    for (const auto& ray : rays) {
-//        game.window.draw(ray);
-//    }
-//
-//    for (const auto& marker : collisionMarkers) {
-//        game.window.draw(marker);
-//    }
+        if(debugMode){
+            auto &rays = player.rays;
+            auto &collisionMarkers = player.collisionMarkers;
+
+            for (const auto& ray : rays) {
+                game.window.draw(ray);
+            }
+
+            for (const auto& marker : collisionMarkers) {
+                game.window.draw(marker);
+            }
+        }
+    }
 }
 
 void AiGameState::update(Game &game) {
-    Car &car = this->getCar();
+    std::cout << "Updating!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
 
-    car.update(game.dt);
     performRaycasts(game);
 
     // Car Movement
     this->updateAI();
 
-    // Update Queue
+    // Set DebugTimer
     this->setDebugTimer(getDebugTimer() + game.dt);
-    if (getDebugTimer() >= 1.0f) {
-        // Print ray distances
-        // std::cout << "[DEBUG] Ray lengths: ";
-        for (size_t i = 0; i < rayDistances.size(); ++i) {
-            //     std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
-        }
-        std::cout << "\n";
 
-        // Reset the timer
-        setDebugTimer(0.0f);
-    }
+    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+        Player &player = players[playerIDX];
+        Car &car = player.car;
 
-    // Get the car's transformed points
-    sf::Transform carTransform = car.getCarSprite().getTransform();
-    sf::FloatRect carLocalBounds = car.getCarSprite().getLocalBounds();
+        //std::cout << "pos: [" << player.car.getCurrentPosition().x << "/" << player.car.getCurrentPosition().y << "]\n";
 
-    std::vector<sf::Vector2f> carPoints(4);
-    carPoints[0] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left, carLocalBounds.top));
-    carPoints[1] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left + carLocalBounds.width, carLocalBounds.top));
-    carPoints[2] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left + carLocalBounds.width, carLocalBounds.top + carLocalBounds.height));
-    carPoints[3] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left, carLocalBounds.top + carLocalBounds.height));
+        if(!player.isDead) {
 
-    bool allPointsOnRoad = true;
+            car.update(game.dt);
 
-    for (const auto& point : carPoints) {
-        bool pointOnRoad = false;
+            auto &rayDistances = player.rayDistances;
 
-        // Determine which tile the point is over
-        int tileSize = game.getTileSize();
-        sf::Vector2i pointTilePosition(
-                static_cast<int>(point.x / tileSize),
-                static_cast<int>(point.y / tileSize)
-        );
+            if (getDebugTimer() >= 1.0f) {
+                // Print ray distances
+                // std::cout << "[DEBUG] Ray lengths: ";
+                for (size_t i = 0; i < rayDistances.size(); ++i) {
+                    //     std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
+                }
+                std::cout << "\n";
 
-        // Search neighboring tiles
-        int searchRadius = 1;
-        for (int dx = -searchRadius; dx <= searchRadius; ++dx) {
-            for (int dy = -searchRadius; dy <= searchRadius; ++dy) {
-                int x = pointTilePosition.x + dx;
-                int y = pointTilePosition.y + dy;
+                // Reset the timer
+                setDebugTimer(0.0f);
+            }
 
-                if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y)
-                    continue;
+            // Get the car's transformed points
+            sf::Transform carTransform = car.getCarSprite().getTransform();
+            sf::FloatRect carLocalBounds = car.getCarSprite().getLocalBounds();
 
-                int tileID = placedTileIDs[x][y];
-                if (tileID < 0) continue;
+            std::vector<sf::Vector2f> carPoints(4);
+            carPoints[0] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left, carLocalBounds.top));
+            carPoints[1] = carTransform.transformPoint(
+                    sf::Vector2f(carLocalBounds.left + carLocalBounds.width, carLocalBounds.top));
+            carPoints[2] = carTransform.transformPoint(sf::Vector2f(carLocalBounds.left + carLocalBounds.width,
+                                                                    carLocalBounds.top + carLocalBounds.height));
+            carPoints[3] = carTransform.transformPoint(
+                    sf::Vector2f(carLocalBounds.left, carLocalBounds.top + carLocalBounds.height));
 
-                Tile& tile = tiles[tileID];
-                const sf::ConvexShape& collisionShape = tile.collisionShape;
+            bool allPointsOnRoad = true;
 
-                sf::Sprite& tileSprite = placedTileSprites[x][y];
+            for (const auto &point: carPoints) {
+                bool pointOnRoad = false;
 
-                sf::Transform combinedTransform = tileSprite.getTransform() * collisionShape.getTransform();
+                // Determine which tile the point is over
+                int tileSize = game.getTileSize();
+                sf::Vector2i pointTilePosition(
+                        static_cast<int>(point.x / tileSize),
+                        static_cast<int>(point.y / tileSize)
+                );
 
-                if (isPointInPolygon(point, collisionShape, combinedTransform)) {
-                    pointOnRoad = true;
-                    break;
+                // Search neighboring tiles
+                int searchRadius = 1;
+                for (int dx = -searchRadius; dx <= searchRadius; ++dx) {
+                    for (int dy = -searchRadius; dy <= searchRadius; ++dy) {
+                        int x = pointTilePosition.x + dx;
+                        int y = pointTilePosition.y + dy;
+
+                        if (x < 0 || x >= boundaries.x || y < 0 || y >= boundaries.y)
+                            continue;
+
+                        int tileID = placedTileIDs[x][y];
+                        if (tileID < 0) continue;
+
+                        Tile &tile = tiles[tileID];
+                        const sf::ConvexShape &collisionShape = tile.collisionShape;
+
+                        sf::Sprite &tileSprite = placedTileSprites[x][y];
+
+                        sf::Transform combinedTransform = tileSprite.getTransform() * collisionShape.getTransform();
+
+                        if (isPointInPolygon(point, collisionShape, combinedTransform)) {
+                            pointOnRoad = true;
+                            break;
+                        }
+                    }
+                    if (pointOnRoad) break;
+                }
+
+                if (!pointOnRoad) {
+                    allPointsOnRoad = false;
+                    break; // One point is off the road
                 }
             }
-            if (pointOnRoad) break;
-        }
 
-        if (!pointOnRoad) {
-            allPointsOnRoad = false;
-            break; // One point is off the road
+            if (!allPointsOnRoad) {
+                std::cout << " player should die?!\n";
+                player.isDead = true;
+                player.points -= 1000;
+            }
         }
-    }
-
-    if (!allPointsOnRoad) {
-        std::cout << "[DEBUG] Car is off the road\n";
-        game.changeState(std::make_shared<DeathState>());
-        return;
     }
 }
 
 void AiGameState::handleInput(Game &game) {
-
     sf::Event event;
     while (game.window.pollEvent(event)) {
-
+        if (event.type == sf::Event::Closed) {
+            std::cout << "[DEBUG] Window closed event received\n";
+            game.window.close();
+        }
+        if (isPauseKeyPressed(event)) {
+            std::cout << "[DEBUG] Pause key pressed\n";
+            game.pushState(std::make_shared<PauseState>());
+        }
     }
 }
 
 void AiGameState::updateAI() {
-    Car &car = this->getCar();
+    auto &rayAngles = this->getRayAngles();
+    int raySize = rayAngles.size();
 
-    af::array input = Utility::vectorToArray(rayDistances);
-    af::array result = network.feed_forward_single(rayDistances, 0);
-
-    std::vector<float> vect = Utility::arrayToVector(result);
-
-    if(vect[0] > 0.0f){
-        car.setAcceleration(car.getAccelerationConstant());
-    }else{
-        car.setAcceleration(-car.getAccelerationConstant());
+    std::vector<float> inputData(raySize * networks, 0.0f);
+    for (int i = 0; i < networks; ++i) {
+        for (int r = 0; r < raySize; ++r) {
+            inputData[i * raySize + r] = players[i].rayDistances[r];
+        }
     }
+    af::array inputAf(raySize, 1, networks, inputData.data());
+    af::array outputAf = network.feed_forward(inputAf);
+    int outputNeurons = (int)outputAf.dims()[0];
+    std::vector<float> outputVec(outputNeurons * networks, 0.0f);
+    outputAf.host(outputVec.data());
 
-    if(vect[1] > 0.0f){
-        car.setAngularAcceleration(-car.getAngularAccelerationConstant());
-    }else{
-        car.setAngularAcceleration(car.getAngularAccelerationConstant());
+
+    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+        Player &player = players[playerIDX];
+        Car &car = player.car;
+        auto &rayDistances = player.rayDistances;
+        if(outputVec[playerIDX * outputNeurons + 0] > 0.0f){
+            car.setAcceleration(car.getAccelerationConstant());
+        }else{
+            car.setAcceleration(-car.getAccelerationConstant());
+        }
+
+        if(outputVec[playerIDX * outputNeurons + 1] > 0.0f){
+            car.setAngularAcceleration(-car.getAngularAccelerationConstant());
+        }else{
+            car.setAngularAcceleration(car.getAngularAccelerationConstant());
+        }
     }
-
 }

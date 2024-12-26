@@ -4,7 +4,7 @@
 
 # include "GameState.h"
 
-GameState::GameState(Game &game, const std::string &levelFile) : car(game.getCar()), GameStateParent(game) {
+GameState::GameState(Game &game, const std::string &levelFile, bool debugMode) : car(game.getCar()), GameStateParent(game, levelFile, debugMode) {
     initializeCar();
     initializeRays();
 }
@@ -13,7 +13,6 @@ void GameState::initializeCar() {
     bool hasSpawnPoint = this->getHasSpawnpoint();
     auto &spawnPointPosition = this->getSpawnPointPosition();
     auto &spawnPointDirection = this->getSpawnPointDirection();
-
 
     std::cout << "[DEBUG] Initializing car\n";
     sf::Sprite &carSprite = car.getCarSprite();
@@ -42,33 +41,28 @@ void GameState::initializeCar() {
 }
 
 void GameState::initializeRays() {
+    auto &rayAngles = this->getRayAngles();
     std::cout << "[DEBUG] Initializing rays\n";
-    rayDistances.resize(5, 0.0f);
-    rays.resize(5);
-    collisionMarkers.reserve(5);
+    rayDistances.resize(rayAngles.size(), 0.0f);
+    rays.resize(rayAngles.size());
+    collisionMarkers.reserve(rayAngles.size());
 }
 
 void GameState::performRaycasts(Game &game) {
+    std::cout << "Raycasting!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
+    auto rayAngles = this->getRayAngles();
+    bool debugMode = this->getDebugMode();
 
     float rotation_angle = car.getRotationAngle();
     sf::Vector2f carPosition = car.getCurrentPosition();
 
-    // Define the angles for the rays relative to the car's rotation
-    std::vector<float> rayAngles = {
-            rotation_angle - 90.0f,
-            rotation_angle + 90.0f,
-            rotation_angle,
-            rotation_angle - 45.0f,
-            rotation_angle + 45.0f
-    };
-
     // Normalize angles between 0 and 360 degrees
     for (auto& angle : rayAngles) {
-        angle = fmod(angle + 360.0f, 360.0f);
+        angle = fmod(angle + rotation_angle + 360.0f, 360.0f);
     }
 
     collisionMarkers.clear();
@@ -148,22 +142,22 @@ void GameState::performRaycasts(Game &game) {
         );
         rayDistances[i] = distance;
 
-//        // Create the ray visual representation
-//        if (debugMode == true) {
-//            sf::VertexArray ray(sf::Lines, 2);
-//            ray[0].position = carPosition;
-//            ray[0].color = sf::Color(0, 255, 0, 255);
-//            ray[1].position = rayEnd;
-//            ray[1].color = sf::Color(0, 255, 0, 255);
-//            rays.push_back(ray);
-//
-//            // Add a marker at the collision point
-//            collisionMarkers.emplace_back();
-//            sf::CircleShape& marker = collisionMarkers.back();
-//            marker.setRadius(5);
-//            marker.setPosition(rayEnd - sf::Vector2f(5, 5));
-//            marker.setFillColor(sf::Color::Red);
-//        }
+        // Create the ray visual representation
+        if (debugMode) {
+            sf::VertexArray ray(sf::Lines, 2);
+            ray[0].position = carPosition;
+            ray[0].color = sf::Color(0, 255, 0, 255);
+            ray[1].position = rayEnd;
+            ray[1].color = sf::Color(0, 255, 0, 255);
+            rays.push_back(ray);
+
+            // Add a marker at the collision point
+            collisionMarkers.emplace_back();
+            sf::CircleShape& marker = collisionMarkers.back();
+            marker.setRadius(5);
+            marker.setPosition(rayEnd - sf::Vector2f(5, 5));
+            marker.setFillColor(sf::Color::Red);
+        }
     }
 }
 
@@ -173,9 +167,11 @@ void GameState::render(Game &game) {
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
+    bool debugMode = this->getDebugMode();
 
     game.window.clear();
     game.window.draw(backgroundSprite);
+
     for (int x = 0; x < boundaries.x; ++x) {
         for (int y = 0; y < boundaries.y; ++y) {
             game.window.draw(placedTileSprites[x][y]);
@@ -186,16 +182,16 @@ void GameState::render(Game &game) {
                 sf::ConvexShape collisionShape = tile.collisionShape;
 
                 // Set visual properties for debugging
-//                if (debugMode == true)
-//                {
-//                    collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
-//                    collisionShape.setOutlineColor(sf::Color::Red);
-//                    collisionShape.setOutlineThickness(1.0f);
-//
-//                    // Apply the tile's transform
-//                    sf::Transform transform = placedTileSprites[x][y].getTransform();
-//                    game.window.draw(collisionShape, transform);
-//                }
+                if (debugMode)
+                {
+                    collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
+                    collisionShape.setOutlineColor(sf::Color::Red);
+                    collisionShape.setOutlineThickness(1.0f);
+
+                    // Apply the tile's transform
+                    sf::Transform transform = placedTileSprites[x][y].getTransform();
+                    game.window.draw(collisionShape, transform);
+                }
             }
         }
     }

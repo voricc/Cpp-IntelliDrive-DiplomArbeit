@@ -9,6 +9,7 @@
 Game::Game() : window(sf::VideoMode(1920, 1080), "IntelliDrive", sf::Style::Fullscreen)
 {
     car = {};
+    Utility::setup();
     loadCarData("resources/config/cars.csv");
     car.applyData(cars[0]);
     pushState(std::make_shared<MenuState>());
@@ -42,14 +43,12 @@ void Game::run() {
         }
 
         if (auto currentState = getCurrentState()) {
-            std::cout << "updating state!\n";
             currentState->handleInput(*this);
             currentState->update(*this);
             window.clear();
             currentState->render(*this);
             //calculateAndDisplayFPS();
             window.display();
-            std::cout << "end updating state\n\n";
         }
     }
 }

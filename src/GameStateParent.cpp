@@ -124,7 +124,8 @@ void GameStateParent::loadBackground(Game &game) {
     );
 }
 
-GameStateParent::GameStateParent(Game &game, const std::string &levelFile) {
+GameStateParent::GameStateParent(Game &game, const std::string &levelFile, bool debugMode) {
+    this->debugMode = debugMode;
     ResourceManager& resourceManager = ResourceManager::getInstance();
     std::cout << "[DEBUG] Initializing GameStatee\n";
     placedTileSprites.clear();
@@ -133,7 +134,9 @@ GameStateParent::GameStateParent(Game &game, const std::string &levelFile) {
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
     loadLevelFromCSV(levelFile, game);
+    loadLevelFromCSV(levelFile, game);
     loadBackground(game);
+    initializeRayAngles();
 }
 
 bool GameStateParent::isPointInPolygon(const sf::Vector2f &point, const sf::ConvexShape &polygon) {
@@ -164,4 +167,14 @@ bool GameStateParent::isPointInPolygon(const sf::Vector2f& point, const sf::Conv
 
 bool GameStateParent::isPauseKeyPressed(const sf::Event &event) const {
     return (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P);
+}
+
+void GameStateParent::initializeRayAngles() {
+    float initialAngle = 0.0f - fov / 2.0f;
+    float anglePiece = (rays > 1) ? fov / static_cast<float>(rays - 1) : 0;
+
+    for (int i = 0; i < rays; ++i) {
+        float angle = initialAngle + anglePiece * static_cast<float>(i);
+        rayAngles.emplace_back(angle);
+    }
 }

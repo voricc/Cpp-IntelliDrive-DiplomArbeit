@@ -11,6 +11,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "../vendors/ai/NeuralNetwork/NeuralNetwork.h"
+#include "Car.h"
 
 struct Player {
     std::vector<float> rayDistances;
@@ -24,9 +25,9 @@ struct Player {
 class AiGameState : public GameStateParent {
 private:
     std::vector<Player> players;
+    carData carTemplate;
 
-    int networks = 50;
-    int raySize = 5;
+    int networks = 100;
     NeuralNetwork network;
 
     void initializeCar() override;
@@ -39,7 +40,7 @@ private:
 
     void updateAI();
 public:
-    AiGameState(Game &game, const std::string &levelFile);
+    AiGameState(Game &game, const std::string &levelFile, bool debugMode = false);
 
     explicit AiGameState(Game &game) : GameStateParent(game) {
         initializeCar();

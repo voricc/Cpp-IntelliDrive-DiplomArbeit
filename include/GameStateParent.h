@@ -32,6 +32,12 @@ private:
 
     sf::Vector2i boundaries;
 
+    std::vector<float> rayAngles;
+    float fov = 180.0f;
+    int rays = 5;
+
+    bool debugMode = false;
+
     std::vector<std::vector<int>> placedTileIDs;
     std::vector<std::vector<sf::Sprite>> placedTileSprites;
     std::vector<Tile> tiles;
@@ -41,14 +47,14 @@ private:
     bool hasSpawnPoint = false;
     float debugTimer = 0.0f;
 
+    void loadLevelFromCSV(const std::string &filename, Game &game);
+    void initializeRayAngles();
+    void loadBackground(Game &game);
+
 public:
     bool getLineIntersection(sf::Vector2f p0, sf::Vector2f p1,
                              sf::Vector2f p2, sf::Vector2f p3,
                              sf::Vector2f& intersectionPoint);
-
-    void loadLevelFromCSV(const std::string &filename, Game &game);
-
-    void loadBackground(Game &game);
 
     virtual void initializeCar() = 0;
     virtual void initializeRays() = 0;
@@ -59,7 +65,7 @@ public:
 
     bool isPauseKeyPressed(const sf::Event& event) const;
 
-    GameStateParent(Game& game, const std::string& levelFile);
+    GameStateParent(Game& game, const std::string& levelFile, bool debugMode = false);
     explicit GameStateParent(Game& game) {};
 
     // Getter and Setter
@@ -72,6 +78,8 @@ public:
     sf::Vector2f &getSpawnPointPosition() {return this->spawnPointPosition;};
     sf::Vector2f &getSpawnPointDirection() {return this->spawnPointDirection;};
     bool getHasSpawnpoint() {return this->hasSpawnPoint;};
+    std::vector<float> &getRayAngles() {return this->rayAngles;};
+    bool getDebugMode() {return debugMode;};
 
     void setDebugTimer(float val) {this->debugTimer = val;};
 
