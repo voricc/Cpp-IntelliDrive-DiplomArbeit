@@ -17,6 +17,7 @@ struct Player {
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
     std::vector<sf::CircleShape> collisionMarkers;
+    int nextCheckpoint = 0;
     bool isDead = false;
     float points = 0.0f;
     Car car;
@@ -27,8 +28,14 @@ private:
     std::vector<Player> players;
     carData carTemplate;
 
-    int networks = 100;
+    int networks = 1500;
     NeuralNetwork network;
+
+    float waitTime = 0.0f;
+    float maxWaitTime = 10.0f;
+
+    std::vector<sf::Vector2f> checkpoints;
+    float checkpointRadius = 140.0f;
 
     void initializeCar() override;
     void initializeRays() override;

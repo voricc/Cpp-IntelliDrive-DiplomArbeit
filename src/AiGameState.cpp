@@ -25,6 +25,8 @@ void AiGameState::initializeCar() {
 
     auto &spawnPointPosition = this->getSpawnPointPosition();
     auto &spawnPointDirection = this->getSpawnPointDirection();
+    players.clear();
+    std::cout << "HALO\n";
     for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
         Player player;
         
@@ -226,6 +228,14 @@ void AiGameState::render(Game &game) {
         }
     }
 
+    sf::CircleShape c;
+    c.setRadius(checkpointRadius);
+    c.setFillColor(sf::Color(0,80,190,100));
+    for (int i = 0; i < checkpoints.size(); ++i) {
+        c.setPosition(checkpoints[i] - sf::Vector2f(c.getRadius(), c.getRadius()));
+        game.window.draw(c);
+    }
+
     for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
         Player &player = players[playerIDX];
         Car &car = player.car;
@@ -253,6 +263,22 @@ void AiGameState::update(Game &game) {
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
 
+    std::cout << "DeltaTime: " << game.dt << "\n";
+    waitTime += game.dt;
+
+    if(waitTime > maxWaitTime){
+        waitTime = 0.0f;
+        maxWaitTime += 0.5f;
+        std::cout << "\n\nMAX WAIT TIME REACHED!\n\n";
+        std::vector<float> score;
+        for (int i = 0; i < players.size(); ++i) {
+            score.emplace_back(players[i].points);
+        }
+        network.breed(score, 20, -0.05f, +0.05f);
+        initializeCar();
+        initializeRays();
+    }
+
     performRaycasts(game);
 
     // Car Movement
@@ -265,12 +291,32 @@ void AiGameState::update(Game &game) {
         Player &player = players[playerIDX];
         Car &car = player.car;
 
-        //std::cout << "pos: [" << player.car.getCurrentPosition().x << "/" << player.car.getCurrentPosition().y << "]\n";
-
         if(!player.isDead) {
-
+            // update position
             car.update(game.dt);
 
+            //
+            if (checkpoints.size() > 0) {
+                sf::Vector2f &positionCheckpoint = checkpoints[player.nextCheckpoint];
+                const sf::Vector2f &positionCar = car.getCarSprite().getPosition();
+
+                sf::Vector2f distanceVector = positionCar - positionCheckpoint;
+
+                float distance = sqrtf(distanceVector.x * distanceVector.x + distanceVector.y + distanceVector.y);
+
+                if (distance < checkpointRadius) {
+                    if (player.nextCheckpoint < checkpoints.size() - 1) {
+                        player.nextCheckpoint++;
+                        player.points += 10;
+                        std::cout << ">> Well done! AI #" << playerIDX << " has " << player.points << "pts now.\n";
+                    } else {
+                        player.nextCheckpoint = 0;
+                    }
+                }
+            }
+
+
+            // Update death state
             auto &rayDistances = player.rayDistances;
 
             if (getDebugTimer() >= 1.0f) {
@@ -347,7 +393,7 @@ void AiGameState::update(Game &game) {
             if (!allPointsOnRoad) {
                 std::cout << " player should die?!\n";
                 player.isDead = true;
-                player.points -= 1000;
+                player.points -= 10;
             }
         }
     }
@@ -363,6 +409,11 @@ void AiGameState::handleInput(Game &game) {
         if (isPauseKeyPressed(event)) {
             std::cout << "[DEBUG] Pause key pressed\n";
             game.pushState(std::make_shared<PauseState>());
+        }
+
+        if(event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){
+            sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
+            checkpoints.emplace_back(mousePos.x, mousePos.y);
         }
     }
 }
