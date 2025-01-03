@@ -5,55 +5,35 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
-#include "../include/State.h"
-#include "../include/Car.h"
-#include "../include/Game.h"
-#include "../include/ResourceManager.h"
-#include <cmath>
+#include "GameStateParent.h"
+#include <vector>
+#include <string>
+#include <iostream>
+#include <SFML/Graphics.hpp>
 
-class GameState : public State {
-public:
-    GameState(Game& game, const std::string& levelFile);
-    void GameStateBackground(Game& game);
-
-    GameState(Game& game) : car(game.getCar()) {
-        initializeCar();
-    }
-
-    void handleInput(Game& game) override;
-    void loadLevelFromCSV(const std::string &filename, Game &game);
-
-    void update(Game& game) override;
-    void render(Game& game) override;
-
+class GameState : public GameStateParent {
 private:
-    Car& car;
-    float timeSinceLastPrint = 0.0f;
-    sf::Sprite backgroundSprite;
+    Car &car;
 
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
     std::vector<sf::CircleShape> collisionMarkers;
 
-    sf::Vector2i boundaries;
+    void initializeCar() override;
+    void initializeRays() override;
+    void performRaycasts(Game &game) override;
 
-    std::vector<std::vector<int>> placedTileIDs;
-    std::vector<std::vector<sf::Sprite>> placedTileSprites;
-    std::vector<Tile> tiles;
+    void render(Game &game) override;
+    void update(Game &game) override;
+    void handleInput(Game &game) override;
+public:
+    GameState(Game &game, const std::string &levelFile, bool debugMode = false);
 
-    sf::Vector2f spawnPointPosition;
-    sf::Vector2f spawnPointDirection;
-    bool hasSpawnPoint = false;
-    float debugTimer = 0.0f;
-
-    void initializeCar();
-    void performRaycasts(Game& game);
-    void initialiazeRays();
-    bool isPauseKeyPressed(const sf::Event& event) const;
-    sf::RectangleShape createRoad(Game& game) const;
-    bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon, const sf::Transform& transform);
-
-    bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon);
+    explicit GameState(Game &game) : car(game.getCar()), GameStateParent(game) {
+        initializeCar();
+    }
 };
 
 #endif // GAMESTATE_H
+
+
