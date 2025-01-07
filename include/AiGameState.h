@@ -6,6 +6,7 @@
 #define AIGAMESTATE_H
 
 #include "GameStateParent.h"
+#include "ResourceManager.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -28,11 +29,16 @@ private:
     std::vector<Player> players;
     carData carTemplate;
 
-    int networks = 1500;
+    int currentGen = 0;
+    int deadCars = 0;
+    int bestCar = 0;
+
+    float resetDeadPercentage = 0.99f;
+
+    int networks = 5000;
     NeuralNetwork network;
 
-    float waitTime = 0.0f;
-    float maxWaitTime = 10.0f;
+    sf::Font textFont;
 
     std::vector<sf::Vector2f> checkpoints;
     float checkpointRadius = 140.0f;

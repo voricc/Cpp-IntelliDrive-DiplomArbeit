@@ -7,8 +7,9 @@
 AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
     carTemplate = game.cars[0];
 
-    std::vector<int> topology = {5, 3, 2};
+    std::vector<int> topology = {5, 5, 5, 2};
     std::vector<Utility::Activations> activations = {
+            Utility::Activations::Tanh,
             Utility::Activations::Tanh,
             Utility::Activations::Tanh
     };
@@ -17,6 +18,12 @@ AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMod
 
     this->initializeCar();
     this->initializeRays();
+
+    // Load Font
+    ResourceManager& resourceManager = ResourceManager::getInstance();
+    std::string fontPath = "resources/Fonts/Rubik-Regular.ttf";
+    resourceManager.loadFont("Rubik-Regular", fontPath);
+    textFont = resourceManager.getFont("Rubik-Regular");
 }
 
 void AiGameState::initializeCar() {
@@ -26,7 +33,6 @@ void AiGameState::initializeCar() {
     auto &spawnPointPosition = this->getSpawnPointPosition();
     auto &spawnPointDirection = this->getSpawnPointDirection();
     players.clear();
-    std::cout << "HALO\n";
     for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
         Player player;
         
@@ -236,9 +242,21 @@ void AiGameState::render(Game &game) {
         game.window.draw(c);
     }
 
+
     for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
         Player &player = players[playerIDX];
         Car &car = player.car;
+
+        //player.car.getCarSprite().setColor(getColorBasedOnScore(player.points));
+
+        if(player.points > players[bestCar].points){
+            players[bestCar].car.getCarSprite().setColor(sf::Color(255, 255, 255, 255));
+
+            bestCar = playerIDX;
+            players[bestCar].car.getCarSprite().setColor(sf::Color::Black);
+            //std::cout << "dB: " << players[bestCar].car.getDistanceMovedBackwards() << " dR: " << players[bestCar].car.getDistanceRotated() << "\n";
+        }
+
         car.render(game.window);
 
         if(debugMode){
@@ -254,6 +272,14 @@ void AiGameState::render(Game &game) {
             }
         }
     }
+
+    sf::Text t;
+    t.setString("Generation: " + std::to_string(currentGen) + "\nDead Players: " + std::to_string(deadCars) + "\nBest AI: " + std::to_string(bestCar));
+    t.setFillColor(sf::Color::Black);
+    t.setCharacterSize(20);
+    t.setPosition(10, 10);
+    t.setFont(textFont);
+    game.window.draw(t);
 }
 
 void AiGameState::update(Game &game) {
@@ -264,19 +290,20 @@ void AiGameState::update(Game &game) {
     auto &tiles = this->getTiles();
 
     std::cout << "DeltaTime: " << game.dt << "\n";
-    waitTime += game.dt;
 
-    if(waitTime > maxWaitTime){
-        waitTime = 0.0f;
-        maxWaitTime += 0.5f;
-        std::cout << "\n\nMAX WAIT TIME REACHED!\n\n";
-        std::vector<float> score;
+    if((float)deadCars > (float)players.size() * resetDeadPercentage){
+
+        std::vector<float> score(players.size(), 0.0f);
         for (int i = 0; i < players.size(); ++i) {
-            score.emplace_back(players[i].points);
+            //std::cout << "Player: " << i << " has " << players[i].points << ".\n";
+            score[i] = players[i].points - players[i].car.getDistanceRotated() / 500 - players[i].car.getDistanceMovedBackwards() / 200;
         }
-        network.breed(score, 20, -0.05f, +0.05f);
+        network.breed(score, 100, -0.075f, +0.075f);
         initializeCar();
         initializeRays();
+
+        currentGen++;
+        deadCars = 0;
     }
 
     performRaycasts(game);
@@ -293,22 +320,22 @@ void AiGameState::update(Game &game) {
 
         if(!player.isDead) {
             // update position
-            car.update(game.dt);
+            car.update(0.1f);
 
-            //
+            // Check if checkpoint was reached
             if (checkpoints.size() > 0) {
                 sf::Vector2f &positionCheckpoint = checkpoints[player.nextCheckpoint];
                 const sf::Vector2f &positionCar = car.getCarSprite().getPosition();
 
                 sf::Vector2f distanceVector = positionCar - positionCheckpoint;
 
-                float distance = sqrtf(distanceVector.x * distanceVector.x + distanceVector.y + distanceVector.y);
+                float distance = sqrtf(distanceVector.x * distanceVector.x + distanceVector.y * distanceVector.y);
 
                 if (distance < checkpointRadius) {
+                    player.points += 10;
+                    //std::cout << ">> Well done! AI #" << playerIDX << " has " << player.points << "pts now.\n";
                     if (player.nextCheckpoint < checkpoints.size() - 1) {
                         player.nextCheckpoint++;
-                        player.points += 10;
-                        std::cout << ">> Well done! AI #" << playerIDX << " has " << player.points << "pts now.\n";
                     } else {
                         player.nextCheckpoint = 0;
                     }
@@ -391,7 +418,8 @@ void AiGameState::update(Game &game) {
             }
 
             if (!allPointsOnRoad) {
-                std::cout << " player should die?!\n";
+                //std::cout << " player should die?!\n";
+                deadCars++;
                 player.isDead = true;
                 player.points -= 10;
             }
