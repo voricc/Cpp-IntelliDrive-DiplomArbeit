@@ -14,6 +14,8 @@
 #include "../vendors/ai/NeuralNetwork/NeuralNetwork.h"
 #include "Car.h"
 
+enum Debug : int {None = 0, Checkpoints = 1, Rays = 2, Hitboxes = 3, BestCar = 4};
+
 struct Player {
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
@@ -29,13 +31,17 @@ private:
     std::vector<Player> players;
     carData carTemplate;
 
+    bool forceReset = false;
+
+    Debug debug = None;
+
     int currentGen = 0;
     int deadCars = 0;
-    int bestCar = 0;
+    float mutationIndex = 0.043567788f;
 
-    float resetDeadPercentage = 0.99f;
+    float resetDeadPercentage = 0.995f;
 
-    int networks = 5000;
+    int networks = 2500;
     NeuralNetwork network;
 
     sf::Font textFont;

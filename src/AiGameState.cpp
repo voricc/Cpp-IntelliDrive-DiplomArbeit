@@ -7,9 +7,8 @@
 AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
     carTemplate = game.cars[0];
 
-    std::vector<int> topology = {5, 5, 5, 2};
+    std::vector<int> topology = {5, 8, 2};
     std::vector<Utility::Activations> activations = {
-            Utility::Activations::Tanh,
             Utility::Activations::Tanh,
             Utility::Activations::Tanh
     };
@@ -179,7 +178,7 @@ void AiGameState::performRaycasts(Game &game) {
             rayDistances[i] = distance;
 
             // Create the ray visual representation
-            if (debugMode) {
+            if (debug == Debug::Rays) {
                 sf::VertexArray ray(sf::Lines, 2);
                 ray[0].position = carPosition;
                 ray[0].color = sf::Color(0, 255, 0, 255);
@@ -220,7 +219,7 @@ void AiGameState::render(Game &game) {
                 sf::ConvexShape collisionShape = tile.collisionShape;
 
                 // Set visual properties for debugging
-                if (debugMode)
+                if (debug == Debug::Hitboxes)
                 {
                     collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
                     collisionShape.setOutlineColor(sf::Color::Red);
@@ -234,47 +233,42 @@ void AiGameState::render(Game &game) {
         }
     }
 
-    sf::CircleShape c;
-    c.setRadius(checkpointRadius);
-    c.setFillColor(sf::Color(0,80,190,100));
-    for (int i = 0; i < checkpoints.size(); ++i) {
-        c.setPosition(checkpoints[i] - sf::Vector2f(c.getRadius(), c.getRadius()));
-        game.window.draw(c);
+    if(debug == Debug::Checkpoints) {
+        sf::CircleShape c;
+        c.setRadius(checkpointRadius);
+        c.setFillColor(sf::Color(0, 80, 190, 100));
+        for (int i = 0; i < checkpoints.size(); ++i) {
+            c.setPosition(checkpoints[i] - sf::Vector2f(c.getRadius(), c.getRadius()));
+            game.window.draw(c);
+        }
     }
 
+    if(debug == Debug::BestCar){
+        players[0].car.render(game.window);
+    }else{
+        for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+            Player &player = players[playerIDX];
+            Car &car = player.car;
 
-    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
-        Player &player = players[playerIDX];
-        Car &car = player.car;
+            car.render(game.window);
 
-        //player.car.getCarSprite().setColor(getColorBasedOnScore(player.points));
+            if(debug == Debug::Rays){
+                auto &rays = player.rays;
+                auto &collisionMarkers = player.collisionMarkers;
 
-        if(player.points > players[bestCar].points){
-            players[bestCar].car.getCarSprite().setColor(sf::Color(255, 255, 255, 255));
+                for (const auto& ray : rays) {
+                    game.window.draw(ray);
+                }
 
-            bestCar = playerIDX;
-            players[bestCar].car.getCarSprite().setColor(sf::Color::Black);
-            //std::cout << "dB: " << players[bestCar].car.getDistanceMovedBackwards() << " dR: " << players[bestCar].car.getDistanceRotated() << "\n";
-        }
-
-        car.render(game.window);
-
-        if(debugMode){
-            auto &rays = player.rays;
-            auto &collisionMarkers = player.collisionMarkers;
-
-            for (const auto& ray : rays) {
-                game.window.draw(ray);
-            }
-
-            for (const auto& marker : collisionMarkers) {
-                game.window.draw(marker);
+                for (const auto& marker : collisionMarkers) {
+                    game.window.draw(marker);
+                }
             }
         }
     }
 
     sf::Text t;
-    t.setString("Generation: " + std::to_string(currentGen) + "\nDead Players: " + std::to_string(deadCars) + "\nBest AI: " + std::to_string(bestCar));
+    t.setString("Generation: " + std::to_string(currentGen) + "\nMutation Index: " + std::to_string(mutationIndex) + "\nPlayers alive: " + std::to_string(networks - deadCars) + "\nDebug Mode: " + std::to_string(static_cast<int>(debug)));
     t.setFillColor(sf::Color::Black);
     t.setCharacterSize(20);
     t.setPosition(10, 10);
@@ -291,16 +285,18 @@ void AiGameState::update(Game &game) {
 
     std::cout << "DeltaTime: " << game.dt << "\n";
 
-    if((float)deadCars > (float)players.size() * resetDeadPercentage){
+    if(forceReset || (float)deadCars > (float)players.size() * resetDeadPercentage){
 
         std::vector<float> score(players.size(), 0.0f);
         for (int i = 0; i < players.size(); ++i) {
             //std::cout << "Player: " << i << " has " << players[i].points << ".\n";
-            score[i] = players[i].points - players[i].car.getDistanceRotated() / 500 - players[i].car.getDistanceMovedBackwards() / 200;
+            score[i] = players[i].points - players[i].car.getDistanceRotated() / 35 - players[i].car.getDistanceMovedBackwards() / 5 - (players[i].isDead ? -10.0f : 0.0f);
         }
-        network.breed(score, 100, -0.075f, +0.075f);
+        network.breed(score, 10, -mutationIndex, +mutationIndex);
         initializeCar();
         initializeRays();
+
+        forceReset = false;
 
         currentGen++;
         deadCars = 0;
@@ -332,7 +328,7 @@ void AiGameState::update(Game &game) {
                 float distance = sqrtf(distanceVector.x * distanceVector.x + distanceVector.y * distanceVector.y);
 
                 if (distance < checkpointRadius) {
-                    player.points += 10;
+                    player.points += 25;
                     //std::cout << ">> Well done! AI #" << playerIDX << " has " << player.points << "pts now.\n";
                     if (player.nextCheckpoint < checkpoints.size() - 1) {
                         player.nextCheckpoint++;
@@ -421,7 +417,6 @@ void AiGameState::update(Game &game) {
                 //std::cout << " player should die?!\n";
                 deadCars++;
                 player.isDead = true;
-                player.points -= 10;
             }
         }
     }
@@ -439,9 +434,25 @@ void AiGameState::handleInput(Game &game) {
             game.pushState(std::make_shared<PauseState>());
         }
 
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::R){
+            forceReset = true;
+        }
+
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::D){
+            int index = static_cast<int>(debug) >= 4 ? 0 : static_cast<int>(debug) + 1;
+            debug = static_cast<Debug>(index);
+        }
+
         if(event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){
             sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
             checkpoints.emplace_back(mousePos.x, mousePos.y);
+        }
+        if (event.type == sf::Event::MouseWheelScrolled) {
+            if (event.mouseWheelScroll.delta > 0) {
+                mutationIndex += 0.01;
+            } else if (event.mouseWheelScroll.delta < 0) {
+                mutationIndex -= 0.01;
+            }
         }
     }
 }
