@@ -6,12 +6,15 @@
 #define AIGAMESTATE_H
 
 #include "GameStateParent.h"
+#include "ResourceManager.h"
 #include <vector>
 #include <string>
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "../vendors/ai/NeuralNetwork/NeuralNetwork.h"
 #include "Car.h"
+
+enum Debug : int {None = 0, Checkpoints = 1, Rays = 2, Hitboxes = 3, BestCar = 4};
 
 struct Player {
     std::vector<float> rayDistances;
@@ -28,11 +31,20 @@ private:
     std::vector<Player> players;
     carData carTemplate;
 
-    int networks = 1500;
+    bool forceReset = false;
+
+    Debug debug = None;
+
+    int currentGen = 0;
+    int deadCars = 0;
+    float mutationIndex = 0.043567788f;
+
+    float resetDeadPercentage = 0.995f;
+
+    int networks = 2500;
     NeuralNetwork network;
 
-    float waitTime = 0.0f;
-    float maxWaitTime = 10.0f;
+    sf::Font textFont;
 
     std::vector<sf::Vector2f> checkpoints;
     float checkpointRadius = 140.0f;

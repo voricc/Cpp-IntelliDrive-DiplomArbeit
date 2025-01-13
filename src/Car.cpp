@@ -62,40 +62,49 @@ void Car::resetAngularAcceleration() {
 }
 
 void Car::update(float dt) {
+
+    // Calculating the current angle in rad
     float radian_angle = rotation_angle * (PI / 180.0f);
-
     sf::Vector2f forward_direction(sinf(radian_angle), -cosf(radian_angle));
-
+    // Velocity calculation based on acceleration and dt
     velocity += forward_direction * acceleration * dt;
 
+    // Velocity reduction by friction
     velocity -= velocity * friction_coefficient * dt;
 
+    // Speed
     float speed = std::sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+    // Applying speed boundaries to the velocity
     if (speed > max_speed) {
         velocity = (velocity / speed) * max_speed;
     }
-
-    // Apply max speed
     velocity = (max_speed > max_speed) ? forward_direction * max_speed : velocity;
 
+    // Setting the new position
     current_position += velocity * dt;
 
-    // Make the rotational speed dependent on the movement speed
-    angular_velocity += angular_acceleration * speed * ROTATIONAL_SPEED_MULTIPLIER * dt;
+    // Detection if car moves forward or backwards
+    float forwardFactor = velocity.x * forward_direction.x + velocity.y * forward_direction.y;
+    float backwardDistance = 0.0f;
+    if (forwardFactor < 0.0f) {
+        float backwardSpeed = -forwardFactor;
+        backwardDistance = backwardSpeed * dt;
+    }
+    distanceMovedBackwards += backwardDistance;
 
-    // Decelerate the rotation
+    angular_velocity += angular_acceleration * speed * ROTATIONAL_SPEED_MULTIPLIER * dt;
     float angular_velocity_new = angular_velocity * ANGULAR_DAMPING_MULTIPLIER;
 
-    // Make sure the car won't change directions
-    if(angular_velocity > 0 && angular_velocity_new < 0 || angular_velocity < 0 && angular_velocity_new > 0){
-        //angular_velocity = 0;
-    }else{
+    if (angular_velocity > 0 && angular_velocity_new < 0 || angular_velocity < 0 && angular_velocity_new > 0) {
+        //angular_velocity = 0; // (optional, aktuell auskommentiert)
+    } else {
         angular_velocity = angular_velocity_new;
     }
-    angular_velocity = angular_velocity_new;
 
     rotation_angle += angular_velocity * dt;
+    distanceRotated += std::abs(angular_velocity * dt);
 
+    // Angle should be between 0 and 360°
     if (rotation_angle >= 360.0f) {
         rotation_angle -= 360.0f;
     } else if (rotation_angle < 0.0f) {
@@ -104,7 +113,6 @@ void Car::update(float dt) {
 
     carSprite.setPosition(current_position);
     carSprite.setRotation(rotation_angle);
-
     previous_position = current_position;
 }
 

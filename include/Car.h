@@ -42,6 +42,9 @@ public:
     float getAccelerationConstant() const;
     float getAngularAccelerationConstant() const;
 
+    float getDistanceMovedBackwards() {return distanceMovedBackwards;};
+    float getDistanceRotated() {return distanceRotated;};
+
 private:
     sf::Sprite carSprite;
     sf::Vector2f current_position;
@@ -61,6 +64,10 @@ private:
     float maxSpeedValue;
     float handlingValue;
     float accelerationValue;
+
+    // AI DATA
+    float distanceRotated = 0;
+    float distanceMovedBackwards = 0;
 };
 
 #endif // CAR_H
