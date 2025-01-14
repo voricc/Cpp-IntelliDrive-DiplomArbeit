@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include "VariableManager.h"
 #include "../vendors/ai/NeuralNetwork/NeuralNetwork.h"
 #include "Car.h"
 
@@ -33,25 +34,23 @@ private:
 
     bool forceReset = false;
 
+    std::vector<float> rayAngles;
+
     Debug debug = None;
 
     int currentGen = 0;
     int deadCars = 0;
-    float mutationIndex = 0.04f;
 
-    float resetDeadPercentage = 0.995f;
-
-    int networks = 5000;
     NeuralNetwork network;
 
     sf::Font textFont;
 
     std::vector<sf::Vector2f> checkpoints;
-    float checkpointRadius = 140.0f;
 
     void initializeCar() override;
-    void initializeRays() override;
-    void performRaycasts(Game &game) override;
+    void initializeRays();
+    void initializeRayAngles();
+    void performRaycasts(Game &game);
 
     void render(Game &game) override;
     void update(Game &game) override;

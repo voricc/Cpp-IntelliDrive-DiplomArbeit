@@ -32,10 +32,6 @@ private:
 
     sf::Vector2i boundaries;
 
-    std::vector<float> rayAngles;
-    float fov = 270.0f;
-    int rays = 5;
-
     bool debugMode = false;
 
     std::vector<std::vector<int>> placedTileIDs;
@@ -48,7 +44,6 @@ private:
     float debugTimer = 0.0f;
 
     void loadLevelFromCSV(const std::string &filename, Game &game);
-    void initializeRayAngles();
     void loadBackground(Game &game);
 
 public:
@@ -57,8 +52,6 @@ public:
                              sf::Vector2f& intersectionPoint);
 
     virtual void initializeCar() = 0;
-    virtual void initializeRays() = 0;
-    virtual void performRaycasts(Game &game) = 0;
 
     bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon);
     bool isPointInPolygon(const sf::Vector2f& point, const sf::ConvexShape& polygon, const sf::Transform& transform);
@@ -78,7 +71,6 @@ public:
     sf::Vector2f &getSpawnPointPosition() {return this->spawnPointPosition;};
     sf::Vector2f &getSpawnPointDirection() {return this->spawnPointDirection;};
     bool getHasSpawnpoint() {return this->hasSpawnPoint;};
-    std::vector<float> &getRayAngles() {return this->rayAngles;};
     bool getDebugMode() {return debugMode;};
 
     void setDebugTimer(float val) {this->debugTimer = val;};

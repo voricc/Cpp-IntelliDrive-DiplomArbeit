@@ -5,16 +5,20 @@
 # include "AiGameState.h"
 
 AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
-    carTemplate = game.cars[1];
+    carTemplate = game.cars[VariableManager::getSelectedCarIndex()];
 
-    std::vector<int> topology = {5, 4, 2};
-    std::vector<Utility::Activations> activations = {
-            Utility::Activations::Tanh,
-            Utility::Activations::Tanh
-    };
+    for (int i = 0; i < VariableManager::getAiTopology().size(); ++i) {
+        std::cout << i << ": " << VariableManager::getAiTopology()[i] << "\n";
+    }
 
-    network = NeuralNetwork(topology, activations, -1.6f, +1.6f, true, networks);
+    network = NeuralNetwork(VariableManager::getAiTopology(),
+                            VariableManager::getAiActivations(),
+                            -VariableManager::getAiInitialRandomValuesMax(),
+                            +VariableManager::getAiInitialRandomValuesMax(),
+                            VariableManager::getAiInitialRandomValuesUniform(),
+                            VariableManager::getNetworksAmount());
 
+    this->initializeRayAngles();
     this->initializeCar();
     this->initializeRays();
 
@@ -32,7 +36,7 @@ void AiGameState::initializeCar() {
     auto &spawnPointPosition = this->getSpawnPointPosition();
     auto &spawnPointDirection = this->getSpawnPointDirection();
     players.clear();
-    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+    for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
         Player player;
         
         player.car = {};
@@ -66,7 +70,6 @@ void AiGameState::initializeCar() {
 }
 
 void AiGameState::initializeRays() {
-    auto &rayAngles = this->getRayAngles();
     int raySize = rayAngles.size();
 
     for (int playerIDX = 0; playerIDX < players.size(); ++playerIDX) {
@@ -84,9 +87,7 @@ void AiGameState::performRaycasts(Game &game) {
     auto &tiles = this->getTiles();
     bool debugMode = this->getDebugMode();
 
-    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
-        auto rayAngles = this->getRayAngles();
-
+    for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
         Player &player = players[playerIDX];
         Car &car = player.car;
         auto &collisionMarkers = player.collisionMarkers;
@@ -96,19 +97,22 @@ void AiGameState::performRaycasts(Game &game) {
         float rotation_angle = car.getRotationAngle();
         sf::Vector2f carPosition = car.getCurrentPosition();
 
+        std::vector<float> transformedAngles(rayAngles.size(), 0.0f);
+
         // Normalize angles between 0 and 360 degrees
-        for (auto& angle : rayAngles) {
-            angle = fmod(angle + rotation_angle + 360.0f, 360.0f);
+        for (int i = 0; i <= rayAngles.size(); i++) {
+            float angle = rayAngles[i];
+            transformedAngles[i] = fmod(angle + rotation_angle + 360.0f, 360.0f);
         }
 
         collisionMarkers.clear();
         rays.clear();
 
         sf::Vector2u windowSize = game.window.getSize();
-        int tileSize = game.getTileSize();
+        int tileSize = VariableManager::getTileSize();
 
-        for (size_t i = 0; i < rayAngles.size(); ++i) {
-            float angle = rayAngles[i];
+        for (size_t i = 0; i < transformedAngles.size(); ++i) {
+            float angle = transformedAngles[i];
             float radian_angle = angle * (M_PI / 180.0f);
             sf::Vector2f direction(std::sin(radian_angle), -std::cos(radian_angle));
 
@@ -234,7 +238,7 @@ void AiGameState::render(Game &game) {
 
     if(debug == Debug::Checkpoints) {
         sf::CircleShape c;
-        c.setRadius(checkpointRadius);
+        c.setRadius(VariableManager::getCheckpointRadius());
         c.setFillColor(sf::Color(0, 80, 190, 100));
         for (int i = 0; i < checkpoints.size(); ++i) {
             c.setPosition(checkpoints[i] - sf::Vector2f(c.getRadius(), c.getRadius()));
@@ -245,7 +249,7 @@ void AiGameState::render(Game &game) {
     if(debug == Debug::BestCar){
         players[0].car.render(game.window);
     }else{
-        for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+        for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
             Player &player = players[playerIDX];
             Car &car = player.car;
 
@@ -267,7 +271,11 @@ void AiGameState::render(Game &game) {
     }
 
     sf::Text t;
-    t.setString("Generation: " + std::to_string(currentGen) + "\nMutation Index: " + std::to_string(mutationIndex) + "\nPlayers alive: " + std::to_string(networks - deadCars) + "\nDebug Mode: " + std::to_string(static_cast<int>(debug)));
+    t.setString("Generation: " + std::to_string(currentGen) + "\nMutation Index: " +
+    std::to_string(VariableManager::getMutationIndex()) + "\nPlayers alive: " +
+    std::to_string(VariableManager::getNetworksAmount() - deadCars) +
+    "\nDebug Mode: " + std::to_string(static_cast<int>(debug)));
+
     t.setFillColor(sf::Color::Black);
     t.setCharacterSize(20);
     t.setPosition(10, 10);
@@ -281,13 +289,13 @@ void AiGameState::update(Game &game) {
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
 
-    if(forceReset || (float)deadCars > (float)players.size() * resetDeadPercentage){
+    if(forceReset || (float)deadCars > (float)players.size() * VariableManager::getRestartOnDeadPercentage()){
 
         std::vector<float> score(players.size(), 0.0f);
         for (int i = 0; i < players.size(); ++i) {
             score[i] = players[i].points - players[i].car.getDistanceRotated() / 35 - players[i].car.getDistanceMovedBackwards() / 5 - (players[i].isDead ? -10.0f : 0.0f);
         }
-        network.breed(score, 10, -mutationIndex, +mutationIndex);
+        network.breed(score, VariableManager::getAiWinners(), -VariableManager::getMutationIndex(), +VariableManager::getMutationIndex());
         initializeCar();
         initializeRays();
 
@@ -305,7 +313,7 @@ void AiGameState::update(Game &game) {
     // Set DebugTimer
     this->setDebugTimer(getDebugTimer() + game.dt);
 
-    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+    for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
         Player &player = players[playerIDX];
         Car &car = player.car;
 
@@ -322,8 +330,8 @@ void AiGameState::update(Game &game) {
 
                 float distance = sqrtf(distanceVector.x * distanceVector.x + distanceVector.y * distanceVector.y);
 
-                if (distance < checkpointRadius) {
-                    player.points += 25;
+                if (distance < VariableManager::getCheckpointRadius()) {
+                    player.points += VariableManager::getCheckpointPoints();
                     if (player.nextCheckpoint < checkpoints.size() - 1) {
                         player.nextCheckpoint++;
                     } else {
@@ -365,7 +373,7 @@ void AiGameState::update(Game &game) {
                 bool pointOnRoad = false;
 
                 // Determine which tile the point is over
-                int tileSize = game.getTileSize();
+                int tileSize = VariableManager::getTileSize();
                 sf::Vector2i pointTilePosition(
                         static_cast<int>(point.x / tileSize),
                         static_cast<int>(point.y / tileSize)
@@ -435,7 +443,7 @@ void AiGameState::handleInput(Game &game) {
         }
 
         if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::S){
-            std::cout << "\nNetwork saved: " << network.save("resources/Networks/network0.json", 10) <<
+            std::cout << "\nNetwork saved: " << network.save("resources/Networks/network0.json", VariableManager::getAiWinners()) <<
             "\n==========================================\n";
         }
 
@@ -444,6 +452,7 @@ void AiGameState::handleInput(Game &game) {
                       "\n==========================================\n";
             initializeCar();
             initializeRays();
+            deadCars = 0;
         }
 
         if(event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){
@@ -452,32 +461,31 @@ void AiGameState::handleInput(Game &game) {
         }
         if (event.type == sf::Event::MouseWheelScrolled) {
             if (event.mouseWheelScroll.delta > 0) {
-                mutationIndex += 0.01;
+                VariableManager::setMutationIndex(VariableManager::getMutationIndex() + 0.01f);
             } else if (event.mouseWheelScroll.delta < 0) {
-                mutationIndex -= 0.01;
+                VariableManager::setMutationIndex(VariableManager::getMutationIndex() - 0.01f);
             }
         }
     }
 }
 
 void AiGameState::updateAI() {
-    auto &rayAngles = this->getRayAngles();
     int raySize = rayAngles.size();
 
-    std::vector<float> inputData(raySize * networks, 0.0f);
-    for (int i = 0; i < networks; ++i) {
+    std::vector<float> inputData(raySize * VariableManager::getNetworksAmount(), 0.0f);
+    for (int i = 0; i < VariableManager::getNetworksAmount(); ++i) {
         for (int r = 0; r < raySize; ++r) {
             inputData[i * raySize + r] = players[i].rayDistances[r];
         }
     }
-    af::array inputAf(raySize, 1, networks, inputData.data());
+    af::array inputAf(raySize, 1, VariableManager::getNetworksAmount(), inputData.data());
     af::array outputAf = network.feed_forward(inputAf);
     int outputNeurons = (int)outputAf.dims()[0];
-    std::vector<float> outputVec(outputNeurons * networks, 0.0f);
+    std::vector<float> outputVec(outputNeurons * VariableManager::getNetworksAmount(), 0.0f);
     outputAf.host(outputVec.data());
 
 
-    for (int playerIDX = 0; playerIDX < networks; ++playerIDX) {
+    for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
         Player &player = players[playerIDX];
         Car &car = player.car;
         auto &rayDistances = player.rayDistances;
@@ -492,5 +500,15 @@ void AiGameState::updateAI() {
         }else{
             car.setAngularAcceleration(car.getAngularAccelerationConstant());
         }
+    }
+}
+
+void AiGameState::initializeRayAngles() {
+    float initialAngle = 0.0f - VariableManager::getAiFov() / 2.0f;
+    float anglePiece = (VariableManager::getRayAmount() > 1) ? VariableManager::getAiFov() / static_cast<float>(VariableManager::getRayAmount() - 1) : 0;
+
+    for (int i = 0; i < VariableManager::getRayAmount(); ++i) {
+        float angle = initialAngle + anglePiece * static_cast<float>(i);
+        rayAngles.emplace_back(angle);
     }
 }

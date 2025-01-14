@@ -15,13 +15,7 @@ class GameState : public GameStateParent {
 private:
     Car &car;
 
-    std::vector<float> rayDistances;
-    std::vector<sf::VertexArray> rays;
-    std::vector<sf::CircleShape> collisionMarkers;
-
     void initializeCar() override;
-    void initializeRays() override;
-    void performRaycasts(Game &game) override;
 
     void render(Game &game) override;
     void update(Game &game) override;

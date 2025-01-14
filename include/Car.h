@@ -5,6 +5,7 @@
 #define CAR_H
 
 #include <SFML/Graphics.hpp>
+#include "VariableManager.h"
 
 struct carData {
     std::string name;

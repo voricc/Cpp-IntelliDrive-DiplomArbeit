@@ -23,7 +23,7 @@ LevelCreator::LevelCreator(Game& game) : GameState(game), showExplanation(true),
     initializeResources(game);
     createButtons(game);
 
-    boundaries = {static_cast<int>(game.window.getSize().x / game.getTileSize()), static_cast<int>(game.window.getSize().y / game.getTileSize()) + 1};
+    boundaries = {static_cast<int>(game.window.getSize().x / VariableManager::getTileSize()), static_cast<int>(game.window.getSize().y / VariableManager::getTileSize()) + 1};
 
     placedTileIDs.resize(boundaries.x, std::vector<int>(boundaries.y, -1));
     placedTileSprites.resize(boundaries.x, std::vector<sf::Sprite>(boundaries.y));
@@ -215,7 +215,7 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
         }
         if (event.key.code == sf::Keyboard::C) {
             sf::Vector2i mousePosInt = sf::Mouse::getPosition(game.window);
-            sf::Vector2i grid(static_cast<int>(mousePosInt.x / game.getTileSize()), static_cast<int>(mousePosInt.y / game.getTileSize()));
+            sf::Vector2i grid(static_cast<int>(mousePosInt.x / VariableManager::getTileSize()), static_cast<int>(mousePosInt.y / VariableManager::getTileSize()));
 
             if (grid.x >= 0 && grid.x < boundaries.x && grid.y >= 0 && grid.y < boundaries.y) {
                 int tileID = placedTileIDs[grid.x][grid.y];
@@ -265,13 +265,13 @@ void LevelCreator::handleEditInput(const sf::Event& event, Game& game) {
                 rightMouseDown = true;
             }
         } else if (event.mouseButton.button == sf::Mouse::Middle) {
-            sf::Vector2i grid(static_cast<int>(mousePos.x / game.getTileSize()), static_cast<int>(mousePos.y / game.getTileSize()));
+            sf::Vector2i grid(static_cast<int>(mousePos.x / VariableManager::getTileSize()), static_cast<int>(mousePos.y / VariableManager::getTileSize()));
 
             if (grid.x >= 0 && grid.x < boundaries.x && grid.y >= 0 && grid.y < boundaries.y) {
                 // Start setting spawn point
                 settingSpawnPoint = true;
-                spawnPointPosition.x = grid.x * game.getTileSize() + game.getTileSize() / 2;
-                spawnPointPosition.y = grid.y * game.getTileSize() + game.getTileSize() / 2;
+                spawnPointPosition.x = grid.x * VariableManager::getTileSize() + VariableManager::getTileSize() / 2;
+                spawnPointPosition.y = grid.y * VariableManager::getTileSize() + VariableManager::getTileSize() / 2;
                 spawnPointDirection = sf::Vector2f(0.f, 0.f);
             }
         }
@@ -421,13 +421,13 @@ void LevelCreator::updateTileSelectionUI(Game& game) {
 
         // Erhöhe scaleFactor, um Tiles größer zu machen
         float scaleFactor = 1.2f;
-        float scale = game.getTileSize() / sprite.getLocalBounds().height * scaleFactor;
+        float scale = VariableManager::getTileSize() / sprite.getLocalBounds().height * scaleFactor;
         sprite.setScale(scale, scale);
 
         // Passe den Abstand an, um Überlappungen zu verhindern
-        float spacing = game.getTileSize() * scaleFactor * 1.1f;
+        float spacing = VariableManager::getTileSize() * scaleFactor * 1.1f;
         float xPos = game.window.getSize().x / 2 + i * spacing;
-        float yPos = game.window.getSize().y - game.getTileSize() * scaleFactor * 1.2f;
+        float yPos = game.window.getSize().y - VariableManager::getTileSize() * scaleFactor * 1.2f;
         sprite.setPosition(xPos, yPos);
 
         // Setze Transparenz (optional)
@@ -454,12 +454,12 @@ void LevelCreator::updateTileSelectionUI(Game& game) {
 
 void LevelCreator::updatePreviewTile(Game& game) {
     sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
-    float snappedX = static_cast<int>(mousePos.x / game.getTileSize()) * game.getTileSize();
-    float snappedY = static_cast<int>(mousePos.y / game.getTileSize()) * game.getTileSize();
+    float snappedX = static_cast<int>(mousePos.x / VariableManager::getTileSize()) * VariableManager::getTileSize();
+    float snappedY = static_cast<int>(mousePos.y / VariableManager::getTileSize()) * VariableManager::getTileSize();
 
     if (selectedTile != -1) {
         previewTile.setTexture(tiles[selectedTile].getTexture());
-        previewTile.setScale(game.getTileSize() / previewTile.getLocalBounds().height, game.getTileSize() / previewTile.getLocalBounds().height);
+        previewTile.setScale(VariableManager::getTileSize() / previewTile.getLocalBounds().height, VariableManager::getTileSize() / previewTile.getLocalBounds().height);
         previewTile.setPosition(snappedX, snappedY);
         previewTile.setColor(sf::Color(255, 255, 255, 128));
     }
@@ -594,18 +594,18 @@ void LevelCreator::addTileAtMouse(Game& game) {
     }
 
     sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
-    sf::Vector2i grid(static_cast<int>(mousePos.x / game.getTileSize()), static_cast<int>(mousePos.y / game.getTileSize()));
+    sf::Vector2i grid(static_cast<int>(mousePos.x / VariableManager::getTileSize()), static_cast<int>(mousePos.y / VariableManager::getTileSize()));
 
     if (grid.x < 0 || grid.x >= boundaries.x || grid.y < 0 || grid.y >= boundaries.y) {
         return;
     }
 
-    float snappedX = grid.x * game.getTileSize();
-    float snappedY = grid.y * game.getTileSize();
+    float snappedX = grid.x * VariableManager::getTileSize();
+    float snappedY = grid.y * VariableManager::getTileSize();
 
     sf::Sprite s;
     s.setTexture(tiles[selectedTile].getTexture());
-    s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
+    s.setScale(VariableManager::getTileSize() / s.getLocalBounds().height, VariableManager::getTileSize() / s.getLocalBounds().height);
     s.setPosition(snappedX, snappedY);
 
     placedTileIDs[grid.x][grid.y] = selectedTile;
@@ -614,7 +614,7 @@ void LevelCreator::addTileAtMouse(Game& game) {
 
 void LevelCreator::removeTileAtMouse(Game& game) {
     sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
-    sf::Vector2i grid(static_cast<int>(mousePos.x / game.getTileSize()), static_cast<int>(mousePos.y / game.getTileSize()));
+    sf::Vector2i grid(static_cast<int>(mousePos.x / VariableManager::getTileSize()), static_cast<int>(mousePos.y / VariableManager::getTileSize()));
 
     if (grid.x < 0 || grid.x >= boundaries.x || grid.y < 0 || grid.y >= boundaries.y) {
         return;
@@ -808,12 +808,12 @@ void LevelCreator::loadLevelFromCSV(const std::string& filename, Game& game) {
                 int tileID = std::stoi(tileIDStr);
 
                 if (i >= 0 && i < boundaries.x && j >= 0 && j < boundaries.y && tileID != -1) {
-                    float x = i * game.getTileSize();
-                    float y = j * game.getTileSize();
+                    float x = i * VariableManager::getTileSize();
+                    float y = j * VariableManager::getTileSize();
 
                     sf::Sprite s;
                     s.setTexture(tiles[tileID].getTexture());
-                    s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
+                    s.setScale(VariableManager::getTileSize() / s.getLocalBounds().height, VariableManager::getTileSize() / s.getLocalBounds().height);
                     s.setPosition(x, y);
 
                     placedTileIDs[i][j] = tileID;

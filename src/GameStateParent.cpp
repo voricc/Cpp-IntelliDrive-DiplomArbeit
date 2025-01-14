@@ -83,8 +83,8 @@ void GameStateParent::loadLevelFromCSV(const std::string &filename, Game &game) 
 
                     sf::Sprite s;
                     s.setTexture(tiles[texture].getTexture());
-                    s.setScale(game.getTileSize() / s.getLocalBounds().height, game.getTileSize() / s.getLocalBounds().height);
-                    s.setPosition(game.getTileSize() * x, game.getTileSize() * y);
+                    s.setScale(VariableManager::getTileSize() / s.getLocalBounds().height, VariableManager::getTileSize() / s.getLocalBounds().height);
+                    s.setPosition(VariableManager::getTileSize() * x, VariableManager::getTileSize() * y);
 
                     placedTileSprites[x][y] = s;
                     placedTileIDs[x][y] = texture;
@@ -136,7 +136,6 @@ GameStateParent::GameStateParent(Game &game, const std::string &levelFile, bool 
     loadLevelFromCSV(levelFile, game);
     loadLevelFromCSV(levelFile, game);
     loadBackground(game);
-    initializeRayAngles();
 }
 
 bool GameStateParent::isPointInPolygon(const sf::Vector2f &point, const sf::ConvexShape &polygon) {
@@ -167,14 +166,4 @@ bool GameStateParent::isPointInPolygon(const sf::Vector2f& point, const sf::Conv
 
 bool GameStateParent::isPauseKeyPressed(const sf::Event &event) const {
     return (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::P);
-}
-
-void GameStateParent::initializeRayAngles() {
-    float initialAngle = 0.0f - fov / 2.0f;
-    float anglePiece = (rays > 1) ? fov / static_cast<float>(rays - 1) : 0;
-
-    for (int i = 0; i < rays; ++i) {
-        float angle = initialAngle + anglePiece * static_cast<float>(i);
-        rayAngles.emplace_back(angle);
-    }
 }
