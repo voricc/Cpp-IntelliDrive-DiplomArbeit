@@ -39,7 +39,6 @@ private:
     sf::Sprite backgroundSprite;
     float rotationAngle;
     float legendheight;
-    int selectedCarIndex;
 };
 
 #endif // CARCHOOSINGSTATE_H

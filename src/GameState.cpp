@@ -6,7 +6,6 @@
 
 GameState::GameState(Game &game, const std::string &levelFile, bool debugMode) : car(game.getCar()), GameStateParent(game, levelFile, debugMode) {
     initializeCar();
-    initializeRays();
 }
 
 void GameState::initializeCar() {
@@ -37,127 +36,6 @@ void GameState::initializeCar() {
         car.resetRotationAngle();
         car.setPreviousPosition({carSprite.getPosition().x, carSprite.getPosition().y});
         car.setCurrentPosition({carSprite.getPosition().x, carSprite.getPosition().y});
-    }
-}
-
-void GameState::initializeRays() {
-    auto &rayAngles = this->getRayAngles();
-    std::cout << "[DEBUG] Initializing rays\n";
-    rayDistances.resize(rayAngles.size(), 0.0f);
-    rays.resize(rayAngles.size());
-    collisionMarkers.reserve(rayAngles.size());
-}
-
-void GameState::performRaycasts(Game &game) {
-   // std::cout << "Raycasting!\n";
-    sf::Vector2i &boundaries = this->getBoundaries();
-    auto &placedTileIDs = this->getPlacedTileIDs();
-    auto &placedTileSprites = this->getPlacedTileSprites();
-    auto &tiles = this->getTiles();
-    auto rayAngles = this->getRayAngles();
-    bool debugMode = this->getDebugMode();
-
-    float rotation_angle = car.getRotationAngle();
-    sf::Vector2f carPosition = car.getCurrentPosition();
-
-    // Normalize angles between 0 and 360 degrees
-    for (auto& angle : rayAngles) {
-        angle = fmod(angle + rotation_angle + 360.0f, 360.0f);
-    }
-
-    collisionMarkers.clear();
-    rays.clear();
-
-    sf::Vector2u windowSize = game.window.getSize();
-    int tileSize = game.getTileSize();
-
-    for (size_t i = 0; i < rayAngles.size(); ++i) {
-        float angle = rayAngles[i];
-        float radian_angle = angle * (M_PI / 180.0f);
-        sf::Vector2f direction(std::sin(radian_angle), -std::cos(radian_angle));
-
-        sf::Vector2f rayStart = carPosition;
-        sf::Vector2f rayEnd = carPosition;
-
-        float stepSize = 5.0f; // Adjust step size for accuracy and performance
-
-        bool rayTerminated = false;
-
-        while (!rayTerminated) {
-            rayEnd += direction * stepSize;
-
-            // Check if rayEnd is outside window bounds
-            if (rayEnd.x < 0 || rayEnd.x >= windowSize.x || rayEnd.y < 0 || rayEnd.y >= windowSize.y) {
-                rayTerminated = true;
-                break;
-            }
-
-            // Determine which tile the rayEnd is over
-            int tileX = static_cast<int>(rayEnd.x / tileSize);
-            int tileY = static_cast<int>(rayEnd.y / tileSize);
-
-            // Check if tileX and tileY are within boundaries
-            if (tileX < 0 || tileX >= boundaries.x || tileY < 0 || tileY >= boundaries.y) {
-                rayTerminated = true;
-                break;
-            }
-
-            int tileID = placedTileIDs[tileX][tileY];
-
-            // If there is no tile at this position, terminate the ray
-            if (tileID == -1) {
-                rayTerminated = true;
-                break;
-            }
-
-            // Get the tile and its collision shape
-            Tile& tile = tiles[tileID];
-            const sf::ConvexShape& collisionShape = tile.collisionShape;
-            sf::Sprite& tileSprite = placedTileSprites[tileX][tileY];
-
-            // Apply the tile sprite's transform to the collision shape
-            sf::Transform combinedTransform = tileSprite.getTransform();
-
-            // Check if the point is within the collision shape of the tile
-            if (!isPointInPolygon(rayEnd, collisionShape, combinedTransform)) {
-                // The point is in a transparent area (e.g., outside the road), terminate the ray
-                rayTerminated = true;
-                break;
-            }
-
-            // Optional: To prevent the ray from getting stuck due to minimal movement, add a maximum length
-            float distance = sqrtf(
-                    (rayEnd.x - carPosition.x) * (rayEnd.x - carPosition.x) +
-                    (rayEnd.y - carPosition.y) * (rayEnd.y - carPosition.y)
-            );
-            if (distance >= 10000.0f) { // Adjust maximum length as needed
-                rayTerminated = true;
-                break;
-            }
-        }
-
-        float distance = sqrtf(
-                (rayEnd.x - carPosition.x) * (rayEnd.x - carPosition.x) +
-                (rayEnd.y - carPosition.y) * (rayEnd.y - carPosition.y)
-        );
-        rayDistances[i] = distance;
-
-        // Create the ray visual representation
-        if (debugMode) {
-            sf::VertexArray ray(sf::Lines, 2);
-            ray[0].position = carPosition;
-            ray[0].color = sf::Color(0, 255, 0, 255);
-            ray[1].position = rayEnd;
-            ray[1].color = sf::Color(0, 255, 0, 255);
-            rays.push_back(ray);
-
-            // Add a marker at the collision point
-            collisionMarkers.emplace_back();
-            sf::CircleShape& marker = collisionMarkers.back();
-            marker.setRadius(5);
-            marker.setPosition(rayEnd - sf::Vector2f(5, 5));
-            marker.setFillColor(sf::Color::Red);
-        }
     }
 }
 
@@ -197,14 +75,6 @@ void GameState::render(Game &game) {
     }
 
     car.render(game.window);
-
-    for (const auto& ray : rays) {
-        game.window.draw(ray);
-    }
-
-    for (const auto& marker : collisionMarkers) {
-        game.window.draw(marker);
-    }
 }
 
 void GameState::update(Game &game) {
@@ -214,20 +84,6 @@ void GameState::update(Game &game) {
     auto &tiles = this->getTiles();
 
     car.update(game.dt);
-    performRaycasts(game);
-
-    this->setDebugTimer(getDebugTimer() + game.dt);
-    if (getDebugTimer() >= 1.0f) {
-        // Print ray distances
-        // std::cout << "[DEBUG] Ray lengths: ";
-        for (size_t i = 0; i < rayDistances.size(); ++i) {
-            //     std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
-        }
-        std::cout << "\n";
-
-        // Reset the timer
-        setDebugTimer(0.0f);
-    }
 
     // Get the car's transformed points
     sf::Transform carTransform = car.getCarSprite().getTransform();
@@ -245,7 +101,7 @@ void GameState::update(Game &game) {
         bool pointOnRoad = false;
 
         // Determine which tile the point is over
-        int tileSize = game.getTileSize();
+        int tileSize = VariableManager::getTileSize();
         sf::Vector2i pointTilePosition(
                 static_cast<int>(point.x / tileSize),
                 static_cast<int>(point.y / tileSize)

@@ -61,6 +61,8 @@ set(HEADER_FILES
         src/GameStateParent.cpp
         include/GameStateParent.h
         include/GameStateParent.h
+        include/VariableManager.h
+        src/VariableManager.cpp
 )
 
 # Add the main executable target

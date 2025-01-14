@@ -39,16 +39,12 @@ public:
     float dt;
     std::vector<carData> cars;
 
-    float getTileSize() {return this->tileSize;}
-
 private:
     sf::Clock clock;
     Car car;
     sf::Event event;
     std::vector<std::shared_ptr<State>> states;
     std::deque<float> frameTimes;
-
-    float tileSize = 64;
 
     sf::Font font;
     sf::Text fpsText, lowsText, avgText;

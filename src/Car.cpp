@@ -6,14 +6,6 @@
 #include <iostream>
 #include <cmath>
 
-constexpr float PI = 3.14159265f;
-
-constexpr float MAX_ACCELERATION_CONSTANT = 800.0f; // Units: pixels per second squared
-constexpr float MAX_ANGULAR_ACCELERATION_CONSTANT = 200.0f; // Units: degrees per second squared
-constexpr float MAX_SPEED = 450.0f; // Units: pixels per second
-constexpr float ROTATIONAL_SPEED_MULTIPLIER = 0.00425;
-constexpr float ANGULAR_DAMPING_MULTIPLIER = 0.99;
-
 Car::Car()
     : current_position(0.0f, 0.0f),
       velocity(0.0f, 0.0f),
@@ -92,8 +84,8 @@ void Car::update(float dt) {
     }
     distanceMovedBackwards += backwardDistance;
 
-    angular_velocity += angular_acceleration * speed * ROTATIONAL_SPEED_MULTIPLIER * dt;
-    float angular_velocity_new = angular_velocity * ANGULAR_DAMPING_MULTIPLIER;
+    angular_velocity += angular_acceleration * speed * VariableManager::getRotationalSpeedMultiplier() * dt;
+    float angular_velocity_new = angular_velocity * VariableManager::getAngularDampingMultiplier();
 
     if (angular_velocity > 0 && angular_velocity_new < 0 || angular_velocity < 0 && angular_velocity_new > 0) {
         //angular_velocity = 0; // (optional, aktuell auskommentiert)
@@ -137,9 +129,9 @@ void Car::applyData(carData &data) {
     handlingValue = static_cast<float>(data.Handling);
     accelerationValue = static_cast<float>(data.Acceleration);
 
-    acceleration_constant = accelerationValue * (MAX_ACCELERATION_CONSTANT / 10.0f);
-    angular_acceleration_constant = handlingValue * (MAX_ANGULAR_ACCELERATION_CONSTANT / 10.0f);
-    max_speed = maxSpeedValue * (MAX_SPEED / 10.0f);
+    acceleration_constant = accelerationValue * (VariableManager::getMaxAccelerationConstant() / 10.0f);
+    angular_acceleration_constant = handlingValue * (VariableManager::getMaxAngularAccelerationConstant() / 10.0f);
+    max_speed = maxSpeedValue * (VariableManager::getMaxSpeed() / 10.0f);
 }
 
 float Car::getRotationAngle() const {
