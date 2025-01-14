@@ -60,6 +60,7 @@ void CarChoosingState::handleInput(Game& game) {
                 selectedCarIndex = (selectedCarIndex + 1) % game.cars.size();
             }
             if (event.key.code == sf::Keyboard::Enter) {
+                game.selectedCarIndex = selectedCarIndex;
                 game.getCar().applyData(game.cars[selectedCarIndex]);
                 game.changeState(std::make_shared<MenuState>());
             }

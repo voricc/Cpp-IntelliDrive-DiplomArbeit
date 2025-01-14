@@ -4,8 +4,10 @@
 
 # include "AiGameState.h"
 
+#include "CarChooseState.h"
+
 AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
-    carTemplate = game.cars[1];
+    carTemplate = game.cars[game.selectedCarIndex];
 
     std::vector<int> topology = {5, 8, 2};
     std::vector<Utility::Activations> activations = {
@@ -198,7 +200,6 @@ void AiGameState::performRaycasts(Game &game) {
 }
 
 void AiGameState::render(Game &game) {
-    std::cout << "Rendering!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &backgroundSprite = this->getBackgroundSprite();
     auto &placedTileIDs = this->getPlacedTileIDs();
@@ -277,13 +278,10 @@ void AiGameState::render(Game &game) {
 }
 
 void AiGameState::update(Game &game) {
-    std::cout << "Updating!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
-
-    std::cout << "DeltaTime: " << game.dt << "\n";
 
     if(forceReset || (float)deadCars > (float)players.size() * resetDeadPercentage){
 

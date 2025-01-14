@@ -41,7 +41,7 @@ private:
 
     float resetDeadPercentage = 0.995f;
 
-    int networks = 5000;
+    int networks = 1000;
     NeuralNetwork network;
 
     sf::Font textFont;

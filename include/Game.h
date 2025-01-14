@@ -38,7 +38,7 @@ public:
     sf::RenderWindow window;
     float dt;
     std::vector<carData> cars;
-
+    int selectedCarIndex = 0;
     float getTileSize() {return this->tileSize;}
 
 private:
