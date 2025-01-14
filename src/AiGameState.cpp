@@ -7,7 +7,7 @@
 AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
     carTemplate = game.cars[1];
 
-    std::vector<int> topology = {5, 8, 2};
+    std::vector<int> topology = {5, 4, 2};
     std::vector<Utility::Activations> activations = {
             Utility::Activations::Tanh,
             Utility::Activations::Tanh
@@ -181,9 +181,9 @@ void AiGameState::performRaycasts(Game &game) {
             if (debug == Debug::Rays) {
                 sf::VertexArray ray(sf::Lines, 2);
                 ray[0].position = carPosition;
-                ray[0].color = sf::Color(0, 255, 0, 255);
+                ray[0].color = sf::Color(0, 255, 255, 255);
                 ray[1].position = rayEnd;
-                ray[1].color = sf::Color(0, 255, 0, 255);
+                ray[1].color = sf::Color(0, 255, 255, 255);
                 rays.push_back(ray);
 
                 // Add a marker at the collision point
@@ -198,7 +198,6 @@ void AiGameState::performRaycasts(Game &game) {
 }
 
 void AiGameState::render(Game &game) {
-    std::cout << "Rendering!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &backgroundSprite = this->getBackgroundSprite();
     auto &placedTileIDs = this->getPlacedTileIDs();
@@ -277,19 +276,15 @@ void AiGameState::render(Game &game) {
 }
 
 void AiGameState::update(Game &game) {
-    std::cout << "Updating!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
 
-    std::cout << "DeltaTime: " << game.dt << "\n";
-
     if(forceReset || (float)deadCars > (float)players.size() * resetDeadPercentage){
 
         std::vector<float> score(players.size(), 0.0f);
         for (int i = 0; i < players.size(); ++i) {
-            //std::cout << "Player: " << i << " has " << players[i].points << ".\n";
             score[i] = players[i].points - players[i].car.getDistanceRotated() / 35 - players[i].car.getDistanceMovedBackwards() / 5 - (players[i].isDead ? -10.0f : 0.0f);
         }
         network.breed(score, 10, -mutationIndex, +mutationIndex);
@@ -329,7 +324,6 @@ void AiGameState::update(Game &game) {
 
                 if (distance < checkpointRadius) {
                     player.points += 25;
-                    //std::cout << ">> Well done! AI #" << playerIDX << " has " << player.points << "pts now.\n";
                     if (player.nextCheckpoint < checkpoints.size() - 1) {
                         player.nextCheckpoint++;
                     } else {
@@ -344,9 +338,7 @@ void AiGameState::update(Game &game) {
 
             if (getDebugTimer() >= 1.0f) {
                 // Print ray distances
-                // std::cout << "[DEBUG] Ray lengths: ";
                 for (size_t i = 0; i < rayDistances.size(); ++i) {
-                    //     std::cout << "Ray " << i << ": " << rayDistances[i] << " ";
                 }
                 std::cout << "\n";
 
@@ -414,7 +406,6 @@ void AiGameState::update(Game &game) {
             }
 
             if (!allPointsOnRoad) {
-                //std::cout << " player should die?!\n";
                 deadCars++;
                 player.isDead = true;
             }
@@ -441,6 +432,18 @@ void AiGameState::handleInput(Game &game) {
         if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::D){
             int index = static_cast<int>(debug) >= 4 ? 0 : static_cast<int>(debug) + 1;
             debug = static_cast<Debug>(index);
+        }
+
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::S){
+            std::cout << "\nNetwork saved: " << network.save("resources/Networks/network0.json", 10) <<
+            "\n==========================================\n";
+        }
+
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::L){
+            std::cout << "\nNetwork loaded: " << network.load("resources/Networks/network0.json") <<
+                      "\n==========================================\n";
+            initializeCar();
+            initializeRays();
         }
 
         if(event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left){

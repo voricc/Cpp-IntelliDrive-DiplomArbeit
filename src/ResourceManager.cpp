@@ -83,6 +83,8 @@ void ResourceManager::loadTilesFromCSV(const std::string& filename) {
         return;
     }
 
+    tiles.clear();
+
     std::string line;
     while (std::getline(file, line)) {
         std::stringstream ss(line);

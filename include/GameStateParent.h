@@ -33,7 +33,7 @@ private:
     sf::Vector2i boundaries;
 
     std::vector<float> rayAngles;
-    float fov = 180.0f;
+    float fov = 270.0f;
     int rays = 5;
 
     bool debugMode = false;

@@ -6,6 +6,8 @@
 #define SETTINGSMANAGER_H
 
 #include <string>
+#include <fstream>
+#include "../vendors/json/json.hpp"
 
 class SettingsManager {
 public:
