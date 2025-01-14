@@ -5,8 +5,7 @@
 // https://github.com/nlohmann/json IMPORTANT DONT DELETE
 
 #include "SettingsManager.h"
-#include <fstream>
-#include <json.hpp>
+
 
 bool SettingsManager::ai_mode = false;
 std::string SettingsManager::units = "Metric";

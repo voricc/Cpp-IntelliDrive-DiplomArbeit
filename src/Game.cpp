@@ -13,6 +13,8 @@ Game::Game() : window(sf::VideoMode(1920, 1080), "IntelliDrive", sf::Style::Full
     car = {};
     Utility::setup();
     loadCarData("resources/config/cars.csv");
+    std::cout << "[DEBUG] Loading tiles from CSV\n";
+    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     car.applyData(cars[0]);
     pushState(std::make_shared<MenuState>());
 

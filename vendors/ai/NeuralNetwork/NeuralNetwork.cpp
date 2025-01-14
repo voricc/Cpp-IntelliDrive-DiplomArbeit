@@ -255,61 +255,144 @@ std::vector<int> NeuralNetwork::topology() {
     return output;
 }
 
-bool NeuralNetwork::save(std::string path) {
-    if (_weights.empty()) {
-        std::cerr << "The network does not possess any layers!\n";
+bool NeuralNetwork::save(std::string path, int n)
+{
+    // Ensure that n does not exceed the actual number of networks
+    int numNetworks = this->networks(); // the total networks in the 3rd dimension
+    if (n > numNetworks) {
+        n = numNetworks;
+    }
+
+    // Prepare JSON
+    nlohmann::json j;
+    j["topology"] = this->topology();
+
+    std::vector<int> activationVec(_activations.size());
+    for (size_t i = 0; i < _activations.size(); i++) {
+        activationVec[i] = static_cast<int>(_activations[i]);
+    }
+    j["activations"]  = activationVec;
+    j["num_networks"] = numNetworks;
+
+    nlohmann::json layersJson = nlohmann::json::array();
+    for (size_t i = 0; i < _weights.size(); i++) {
+        // Slice out only [0..n-1] in the 3rd dimension
+        af::array wSub = _weights[i](af::span, af::span, af::seq(0, n - 1), af::span);
+        af::array bSub = _biases[i](af::span, af::span, af::seq(0, n - 1), af::span);
+
+        // Retrieve shapes for the partial slices
+        af::dim4 wShape = wSub.dims();
+        af::dim4 bShape = bSub.dims();
+
+        // Convert the partial arrays to std::vector<float>
+        std::vector<float> wData = Utility::arrayToVector(wSub);
+        std::vector<float> bData = Utility::arrayToVector(bSub);
+
+        // Build JSON layer entry
+        nlohmann::json layerJson;
+        layerJson["weights_shape"] = { (int)wShape[0], (int)wShape[1], (int)wShape[2], (int)wShape[3] };
+        layerJson["biases_shape"]  = { (int)bShape[0], (int)bShape[1], (int)bShape[2], (int)bShape[3] };
+
+        layerJson["weights_data"]  = wData;
+        layerJson["biases_data"]   = bData;
+
+        layersJson.push_back(layerJson);
+    }
+    j["layers"] = layersJson;
+
+    // Write to file
+    std::ofstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file for writing: " << path << "\n";
         return false;
     }
-
-    auto topology = this->topology();
-    int networks = this->networks();
-
-    std::stringstream ss;
-    ss << "--- HEADER ---\n";
-    ss << "_NUM_NETWORKS: " << networks << ";\n";
-    ss << "_TOPOLOGY: ";
-    for (size_t i = 0; i < topology.size(); ++i) {
-        ss << topology[i] << (i < topology.size() - 1 ? " " : ";\n");
-    }
-
-    ss << "_ACTIVATIONS: ";
-    for (size_t i = 0; i < _activations.size(); ++i) {
-        ss << static_cast<int>(_activations[i]) << (i < _activations.size() - 1 ? " " : ";\n");
-    }
-
-    ss << "\n--- NETWORK ---\n";
-    for (size_t layer = 0; layer < topology.size() - 1; ++layer) {
-        for (int network = 0; network < networks; ++network) {
-            ss << "_LAYER: " << layer << " _NETWORK: " << network << ";\n";
-
-            af::array lookup = af::constant(network, 1);
-            af::array biases = af::lookup(_weights[layer], lookup.as(u32), 2);
-            auto resultB = Utility::arrayToVector2D(biases);
-
-            ss << "Biases:";
-            for (auto &row : resultB) {
-                ss << " ";
-                for (size_t j = 0; j < row.size(); ++j) {
-                    ss << row[j] << (j < row.size() - 1 ? " " : "");
-                }
-            }
-            ss << ";\n";
-
-            af::array weights = af::lookup(_weights[layer], lookup.as(u32), 2);
-            auto resultW = Utility::arrayToVector2D(weights);
-
-            ss << "Weights:";
-            for (auto &row : resultW) {
-                ss << " ";
-                for (size_t j = 0; j < row.size(); ++j) {
-                    ss << row[j] << (j < row.size() - 1 ? " " : "");
-                }
-            }
-            ss << ";\n\n";
-        }
-    }
-
-    std::cout << ss.str();
+    file << j.dump(4);
+    file.close();
     return true;
 }
 
+bool NeuralNetwork::load(std::string path) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file for reading: " << path << "\n";
+        return false;
+    }
+
+    nlohmann::json j;
+    try {
+        file >> j;
+    } catch (const nlohmann::json::exception &e) {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
+        file.close();
+        return false;
+    }
+    file.close();
+
+    auto top = j["topology"].get<std::vector<int>>();
+    auto actVec = j["activations"].get<std::vector<int>>();
+    int net = j["num_networks"].get<int>();
+
+    // Convert activations
+    std::vector<Utility::Activations> loadedActivations(actVec.size());
+    for (size_t i = 0; i < actVec.size(); i++) {
+        loadedActivations[i] = static_cast<Utility::Activations>(actVec[i]);
+    }
+
+    _weights.clear();
+    _biases.clear();
+    _activations = loadedActivations;
+
+    // Parse each layer from the JSON
+    auto layersJson = j["layers"];
+    for (auto &layer : layersJson) {
+        // Shapes
+        auto wShape = layer["weights_shape"].get<std::vector<int>>();
+        auto bShape = layer["biases_shape"].get<std::vector<int>>();
+
+        // Data
+        std::vector<float> wData = layer["weights_data"].get<std::vector<float>>();
+        std::vector<float> bData = layer["biases_data"].get<std::vector<float>>();
+
+        // Construct the ArrayFire arrays
+        af::array wArr(wShape[0], wShape[1], wShape[2], wShape[3], wData.data());
+        af::array bArr(bShape[0], bShape[1], bShape[2], bShape[3], bData.data());
+
+        // Check if 'net' is greater than what was actually saved in this layer
+        int savedNetworks = wArr.dims()[2]; // number of networks in the 3rd dimension
+        if (net > savedNetworks && savedNetworks > 0) {
+            // Calculate how many full repeats we need, plus any leftover
+            int fullRepeats = net / savedNetworks;
+            int leftover    = net % savedNetworks;
+
+            // Repeat the entire block 'fullRepeats' times
+            af::array wRepeated = af::tile(wArr, 1, 1, fullRepeats, 1);
+            af::array bRepeated = af::tile(bArr, 1, 1, fullRepeats, 1);
+
+            // If there's a remainder, append a partial slice
+            if (leftover > 0) {
+                wRepeated = af::join(
+                        2,
+                        wRepeated,
+                        wArr(af::span, af::span, af::seq(0, leftover - 1), af::span)
+                );
+                bRepeated = af::join(
+                        2,
+                        bRepeated,
+                        bArr(af::span, af::span, af::seq(0, leftover - 1), af::span)
+                );
+            }
+            wArr = wRepeated;
+            bArr = bRepeated;
+        }
+        // If net <= savedNetworks, or savedNetworks == 0, we do nothing special.
+
+        _weights.push_back(wArr);
+        _biases.push_back(bArr);
+    }
+
+    return true;
+}
+
+NeuralNetwork::NeuralNetwork(std::string path) {
+    load(path);
+}
