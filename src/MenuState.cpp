@@ -35,7 +35,7 @@ MenuState::MenuState()
     initializeText(changeBgButton, Textfont, "Change Background", 30, 150, defaultWindowSize.y - 30);
     initializeText(title, Menufont, "INTELLIDRIVE", 200, defaultWindowSize.x / 2.0f, defaultWindowSize.y / 4.0f + 100.f);
 
-    initializeText(versionText, Textfont, "Beta v1.10.5", 20, defaultWindowSize.x - 150, defaultWindowSize.y - 100);
+    initializeText(versionText, Textfont, "Alpha v1.0.2", 20, defaultWindowSize.x - 150, defaultWindowSize.y - 100);
 }
 
 void MenuState::handleInput(Game& game) {
