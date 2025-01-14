@@ -49,7 +49,7 @@ void GameState::initializeRays() {
 }
 
 void GameState::performRaycasts(Game &game) {
-    std::cout << "Raycasting!\n";
+   // std::cout << "Raycasting!\n";
     sf::Vector2i &boundaries = this->getBoundaries();
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
