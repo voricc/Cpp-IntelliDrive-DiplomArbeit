@@ -37,11 +37,11 @@ private:
 
     int currentGen = 0;
     int deadCars = 0;
-    float mutationIndex = 0.043567788f;
+    float mutationIndex = 0.04f;
 
     float resetDeadPercentage = 0.995f;
 
-    int networks = 2500;
+    int networks = 5000;
     NeuralNetwork network;
 
     sf::Font textFont;

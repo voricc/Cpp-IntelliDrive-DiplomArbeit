@@ -130,7 +130,7 @@ void SettingsState::handleInput(Game& game) {
             if(debugTabText.getGlobalBounds().contains(mousePos.x, mousePos.y)) switchTab(SettingsTab::Debug);
 
             if(saveButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                applyChanges();
+                applyChanges(game);
                 game.changeState(std::make_shared<MenuState>());
             }
 
@@ -249,20 +249,45 @@ void SettingsState::switchTab(SettingsTab t) {
     currentTab = t;
 }
 
-void SettingsState::applyChanges() {
+void SettingsState::applyChanges(Game& game) {
     SettingsManager& sm = SettingsManager::getInstance();
-    sm.setAIMode(aiModeValue.getString()=="On");
+    sm.setAIMode(aiModeValue.getString() == "On");
     sm.setUnits(unitsDropdown->getSelectedItem());
     sm.setDisplayMode(displayModeDropdown->getSelectedItem());
     sm.setResolution(resolutionDropdown->getSelectedItem());
-    sm.setVSync(vsyncValue.getString()=="On");
-    if(vsyncValue.getString()=="Off") {
+    sm.setVSync(vsyncValue.getString() == "On");
+
+    if (vsyncValue.getString() == "Off") {
         sm.setFPSLimit(std::stoi(fpsValue.getString().toAnsiString()));
     } else {
         sm.setFPSLimit(120);
     }
-    sm.setDebugMode(debugModeValue.getString()=="On");
-    sm.setFPSCounter(fpsCounterValue.getString()=="On");
+
+    sm.setDebugMode(debugModeValue.getString() == "On");
+    sm.setFPSCounter(fpsCounterValue.getString() == "On");
     sm.setMetricsMode(metricsDropdown->getSelectedItem());
     sm.save("resources/config/config.json");
+
+    // Extract resolution
+    std::string resStr = sm.getResolution();
+    int width = std::stoi(resStr.substr(0, resStr.find('x')));
+    int height = std::stoi(resStr.substr(resStr.find('x') + 1));
+
+    // Determine window style based on display mode
+    sf::Uint32 style;
+    if (sm.getDisplayMode() == "fullscreen") {
+        style = sf::Style::Fullscreen;
+    } else if (sm.getDisplayMode() == "windowed") {
+        style = sf::Style::Default;
+    } else if (sm.getDisplayMode() == "borderless") {
+        style = sf::Style::None;
+    }
+
+    // Recreate the window at the selected resolution without scaling
+    game.window.create(sf::VideoMode(width, height), "IntelliDrive", style);
+
+    // Apply VSync and FPS limit
+    game.window.setVerticalSyncEnabled(sm.getVSync());
+    game.window.setFramerateLimit(sm.getFPSLimit());
 }
+

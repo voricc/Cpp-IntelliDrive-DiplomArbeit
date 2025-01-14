@@ -8,6 +8,8 @@
 
 Game::Game() : window(sf::VideoMode(1920, 1080), "IntelliDrive", sf::Style::Fullscreen)
 {
+    ResourceManager& resourceManager = ResourceManager::getInstance();
+    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     car = {};
     Utility::setup();
     loadCarData("resources/config/cars.csv");

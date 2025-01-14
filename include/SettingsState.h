@@ -25,7 +25,7 @@ public:
 
 private:
     void switchTab(SettingsTab t);
-    void applyChanges();
+    void applyChanges(Game& game);
     void loadUI();
     void drawTabs(sf::RenderWindow& window);
     void drawGeneral(sf::RenderWindow& window);

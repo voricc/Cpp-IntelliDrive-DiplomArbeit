@@ -5,7 +5,7 @@
 # include "AiGameState.h"
 
 AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
-    carTemplate = game.cars[0];
+    carTemplate = game.cars[1];
 
     std::vector<int> topology = {5, 8, 2};
     std::vector<Utility::Activations> activations = {
@@ -13,7 +13,7 @@ AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMod
             Utility::Activations::Tanh
     };
 
-    network = NeuralNetwork(topology, activations, -1.8f, +1.8f, true, networks);
+    network = NeuralNetwork(topology, activations, -1.6f, +1.6f, true, networks);
 
     this->initializeCar();
     this->initializeRays();

@@ -77,7 +77,7 @@ void ResourceManager::saveTilesToCSV(const std::string& filename) {
 
 void ResourceManager::loadTilesFromCSV(const std::string& filename) {
     std::ifstream file(filename);
-
+    tiles.clear();
     if (!file.is_open()) {
         std::cerr << "Error opening file for loading" << std::endl;
         return;

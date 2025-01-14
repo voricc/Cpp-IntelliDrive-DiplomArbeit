@@ -69,9 +69,20 @@ void LevelSelectState::handleInput(Game& game) {
                 if (i + currentPage * levelsPerPage >= levelFiles.size()) break;
                 if (levelButtons[i].getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                     std::string selectedLevel = "resources/Levels/" + levelFiles[i + currentPage * levelsPerPage];
-                    game.changeState(std::make_shared<AiGameState>(game, selectedLevel, false));
+
+                    // Dynamisch den Spielzustand bestimmen basierend auf ai_mode und debug_mode
+                    SettingsManager& sm = SettingsManager::getInstance();
+                    bool aiMode = sm.getAIMode();
+                    bool debugMode = sm.getDebugMode();
+
+                    if (aiMode) {
+                        game.changeState(std::make_shared<AiGameState>(game, selectedLevel, debugMode));
+                    } else {
+                        game.changeState(std::make_shared<GameState>(game, selectedLevel, debugMode));
+                    }
                 }
             }
+
 
             // Handle right arrow click (next page)
             if (arrowRightSprite.getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
@@ -87,6 +98,8 @@ void LevelSelectState::handleInput(Game& game) {
         }
     }
 }
+
+
 
 void LevelSelectState::update(Game& game) {
     sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
