@@ -3,7 +3,7 @@
 //
 
 #include "GameStateParent.h"
-
+#include <stdlib.h>
 
 bool GameStateParent::getLineIntersection(sf::Vector2f p0, sf::Vector2f p1, sf::Vector2f p2, sf::Vector2f p3,
                                           sf::Vector2f &intersectionPoint) {
@@ -127,13 +127,14 @@ void GameStateParent::loadBackground(Game &game) {
 GameStateParent::GameStateParent(Game &game, const std::string &levelFile, bool debugMode) {
     this->debugMode = debugMode;
     ResourceManager& resourceManager = ResourceManager::getInstance();
+    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     std::cout << "[DEBUG] Initializing GameStatee\n";
     placedTileSprites.clear();
     placedTileIDs.clear();
     std::cout << "[DEBUG] Loading tiles from CSV\n";
-    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
+  //  resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
+  //  resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     tiles = resourceManager.getTiles();
-    loadLevelFromCSV(levelFile, game);
     loadLevelFromCSV(levelFile, game);
     loadBackground(game);
     initializeRayAngles();
