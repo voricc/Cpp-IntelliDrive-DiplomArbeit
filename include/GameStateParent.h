@@ -31,8 +31,6 @@ private:
 
     sf::Vector2i boundaries;
 
-    bool debugMode = false;
-
     std::vector<std::vector<int>> placedTileIDs;
     std::vector<std::vector<sf::Sprite>> placedTileSprites;
     std::vector<Tile> tiles;
@@ -57,7 +55,7 @@ public:
 
     bool isPauseKeyPressed(const sf::Event& event) const;
 
-    GameStateParent(Game& game, const std::string& levelFile, bool debugMode = false);
+    GameStateParent(Game& game, const std::string& levelFile);
     explicit GameStateParent(Game& game) {};
 
     // Getter and Setter
@@ -70,7 +68,6 @@ public:
     sf::Vector2f &getSpawnPointPosition() {return this->spawnPointPosition;};
     sf::Vector2f &getSpawnPointDirection() {return this->spawnPointDirection;};
     bool getHasSpawnpoint() {return this->hasSpawnPoint;};
-    bool getDebugMode() {return debugMode;};
 
     void setDebugTimer(float val) {this->debugTimer = val;};
 

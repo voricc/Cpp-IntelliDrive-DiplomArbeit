@@ -4,7 +4,7 @@
 
 # include "AiGameState.h"
 
-AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMode) : GameStateParent(game, levelFile, debugMode) {
+AiGameState::AiGameState(Game &game, const std::string &levelFile) : GameStateParent(game, levelFile) {
     carTemplate = game.cars[VariableManager::getSelectedCarIndex()];
 
     for (int i = 0; i < VariableManager::getAiTopology().size(); ++i) {
@@ -82,7 +82,6 @@ void AiGameState::performRaycasts(Game &game) {
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
-    bool debugMode = this->getDebugMode();
 
     for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
         Player &player = players[playerIDX];
@@ -179,7 +178,7 @@ void AiGameState::performRaycasts(Game &game) {
             rayDistances[i] = distance;
 
             // Create the ray visual representation
-            if (debug == Debug::Rays) {
+            if (VariableManager::getShowRays()) {
                 sf::VertexArray ray(sf::Lines, 2);
                 ray[0].position = carPosition;
                 ray[0].color = sf::Color(0, 255, 255, 255);
@@ -204,7 +203,6 @@ void AiGameState::render(Game &game) {
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
-    bool debugMode = this->getDebugMode();
 
     game.window.clear();
     game.window.draw(backgroundSprite);
@@ -219,7 +217,7 @@ void AiGameState::render(Game &game) {
                 sf::ConvexShape collisionShape = tile.collisionShape;
 
                 // Set visual properties for debugging
-                if (debug == Debug::Hitboxes)
+                if (VariableManager::getShowColliders())
                 {
                     collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
                     collisionShape.setOutlineColor(sf::Color::Red);
@@ -233,7 +231,7 @@ void AiGameState::render(Game &game) {
         }
     }
 
-    if(debug == Debug::Checkpoints) {
+    if(VariableManager::getShowCheckpoints()) {
         sf::CircleShape c;
         c.setRadius(VariableManager::getCheckpointRadius());
         c.setFillColor(sf::Color(0, 80, 190, 100));
@@ -243,7 +241,7 @@ void AiGameState::render(Game &game) {
         }
     }
 
-    if(debug == Debug::BestCar){
+    if(false){
         players[0].car.render(game.window);
     }else{
         for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
@@ -252,7 +250,7 @@ void AiGameState::render(Game &game) {
 
             car.render(game.window);
 
-            if(debug == Debug::Rays){
+            if(VariableManager::getShowRays()){
                 auto &rays = player.rays;
                 auto &collisionMarkers = player.collisionMarkers;
 
@@ -270,8 +268,7 @@ void AiGameState::render(Game &game) {
     sf::Text t;
     t.setString("Generation: " + std::to_string(currentGen) + "\nMutation Index: " +
     std::to_string(VariableManager::getMutationIndex()) + "\nPlayers alive: " +
-    std::to_string(VariableManager::getNetworksAmount() - deadCars) +
-    "\nDebug Mode: " + std::to_string(static_cast<int>(debug)));
+    std::to_string(VariableManager::getNetworksAmount() - deadCars));
 
     t.setFillColor(sf::Color::Black);
     t.setCharacterSize(20);
@@ -434,10 +431,18 @@ void AiGameState::handleInput(Game &game) {
             forceReset = true;
         }
 
-        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::D){
-            int index = static_cast<int>(debug) >= 4 ? 0 : static_cast<int>(debug) + 1;
-            debug = static_cast<Debug>(index);
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num1){
+            VariableManager::setShowCheckpoints(!VariableManager::getShowCheckpoints());
         }
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num2){
+            VariableManager::setShowRays(!VariableManager::getShowRays());
+        }
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num3){
+            VariableManager::setShowColliders(!VariableManager::getShowColliders());
+        }
+//        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num4){
+//            VariableManager::setShowCheckpoints(!VariableManager::getShowCheckpoints());
+//        }
 
         if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::S){
             std::cout << "\nNetwork saved: " << network.save("resources/Networks/network0.json", VariableManager::getAiWinners()) <<

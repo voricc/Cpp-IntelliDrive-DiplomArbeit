@@ -338,6 +338,8 @@ bool NeuralNetwork::load(std::string path) {
         loadedActivations[i] = static_cast<Utility::Activations>(actVec[i]);
     }
 
+    int networks = _weights[0].dims(2);
+
     _weights.clear();
     _biases.clear();
     _activations = loadedActivations;
@@ -361,8 +363,8 @@ bool NeuralNetwork::load(std::string path) {
         int savedNetworks = wArr.dims()[2]; // number of networks in the 3rd dimension
         if (net > savedNetworks && savedNetworks > 0) {
             // Calculate how many full repeats we need, plus any leftover
-            int fullRepeats = net / savedNetworks;
-            int leftover    = net % savedNetworks;
+            int fullRepeats = (networks) / savedNetworks;
+            int leftover    = networks % savedNetworks;
 
             // Repeat the entire block 'fullRepeats' times
             af::array wRepeated = af::tile(wArr, 1, 1, fullRepeats, 1);
