@@ -37,10 +37,19 @@ private:
 
     // Resources
     static std::string FONT_RUBIK_REGULAR;
+    static std::string FONT_UPHEAVAL_PRO;
+    static std::string FONT_MENU_TITLE;
 
-    static std::unordered_map<std::string, sf::Font> FONTS;
-    static std::unordered_map<std::string, sf::Texture> TEXTURES;
-    static std::vector<Tile> TILES;
+    static std::string PATH_TO_CONFIG;
+    static std::string PATH_TO_TILE_CONFIG;
+    static std::string PATH_TO_CAR_CONFIG;
+    static std::string PATH_TO_LEVELS;
+    static std::string PATH_TO_BACKGROUNDS;
+
+    static std::string IMAGE_CAR_CHOOSING_ARROW_LEFT;
+    static std::string IMAGE_CAR_CHOOSING_ARROW_RIGHT;
+    static std::string IMAGE_GAME_BACKGROUND;
+    static std::string IMAGE_BACKGROUND_CAR_CHOOSING;
 
     // AI
     static int RAY_AMOUNT;
@@ -65,6 +74,18 @@ private:
     static bool SHOW_CHECKPOINTS;
     static bool SHOW_RAYS;
     static float SHOW_CARS_PERCENTAGE;
+
+    // Game
+    static bool AI_MODE;
+
+    // Settings
+    static std::string UNITS;
+    static std::string DISPLAY_MODE;
+    static std::string RESOLUTION;
+    static bool VSYNC;
+    static int FPS_LIMIT;
+    static bool FPS_COUNTER;
+    static std::string METRICS_MODE;
 public:
 
     /// Load and Save functions
@@ -103,6 +124,39 @@ public:
     // Resources
     static std::string getFontRubikRegular() { return FONT_RUBIK_REGULAR; }
     static void setFontRubikRegular(const std::string& value) { FONT_RUBIK_REGULAR = value; }
+
+    static std::string getFontUpheavalPro() { return FONT_UPHEAVAL_PRO; }
+    static void setFontUpheavalPro(const std::string& value) { FONT_UPHEAVAL_PRO = value; }
+
+    static std::string getFontMenuTitle() { return FONT_MENU_TITLE; }
+    static void setFontMenuTitle(const std::string& value) { FONT_MENU_TITLE = value; }
+
+    static std::string getPathToConfig() { return PATH_TO_CONFIG; }
+    static void setPathToConfig(const std::string& value) { PATH_TO_CONFIG = value; }
+
+    static std::string getPathToTileConfig() { return PATH_TO_TILE_CONFIG; }
+    static void setPathToTileConfig(const std::string& value) { PATH_TO_TILE_CONFIG = value; }
+
+    static std::string getPathToCarConfig() { return PATH_TO_CAR_CONFIG; }
+    static void setPathToCarConfig(const std::string& value) { PATH_TO_CAR_CONFIG = value; }
+
+    static std::string getPathToLevels() { return PATH_TO_LEVELS; }
+    static void setPathToLevels(const std::string& value) { PATH_TO_LEVELS = value; }
+
+    static std::string getPathToBackgrounds() { return PATH_TO_BACKGROUNDS; }
+    static void setPathToBackgrounds(const std::string& value) { PATH_TO_BACKGROUNDS = value; }
+
+    static std::string getImageCarChoosingArrowLeft() { return IMAGE_CAR_CHOOSING_ARROW_LEFT; }
+    static void setImageCarChoosingArrowLeft(const std::string& value) { IMAGE_CAR_CHOOSING_ARROW_LEFT = value; }
+
+    static std::string getImageCarChoosingArrowRight() { return IMAGE_CAR_CHOOSING_ARROW_RIGHT; }
+    static void setImageCarChoosingArrowRight(const std::string& value) { IMAGE_CAR_CHOOSING_ARROW_RIGHT = value; }
+
+    static std::string getImageGameBackground() { return IMAGE_GAME_BACKGROUND; }
+    static void setImageGameBackground(const std::string& value) { IMAGE_GAME_BACKGROUND = value; }
+
+    static std::string getImageBackgroundCarChoosing() { return IMAGE_BACKGROUND_CAR_CHOOSING; }
+    static void setImageBackgroundCarChoosing(const std::string& value) { IMAGE_BACKGROUND_CAR_CHOOSING = value; }
 
     // AI
     static int getRayAmount() { return RAY_AMOUNT; }
@@ -160,6 +214,32 @@ public:
 
     static float getShowCarsPercentage() { return SHOW_CARS_PERCENTAGE; }
     static void setShowCarsPercentage(float value) { SHOW_CARS_PERCENTAGE = value; }
+
+    // Game
+    static bool getAiMode() { return AI_MODE; };
+    static void setAiMode(bool v) { AI_MODE = v; };
+
+    // Settings
+    static std::string getUnits() { return UNITS; };
+    static void setUnits(const std::string& u) { UNITS = u; };
+
+    static std::string getDisplayMode() { return DISPLAY_MODE; };
+    static void setDisplayMode(const std::string& m) { DISPLAY_MODE = m; };
+
+    static std::string getResolution() {return RESOLUTION; };
+    static void setResolution(const std::string& r) { RESOLUTION = r; };
+
+    static bool getVSync() { return VSYNC; };
+    static void setVSync(bool v) { VSYNC = v; };
+
+    static int getFpsLimit() { return FPS_LIMIT; };
+    static void setFpsLimit(int f) { FPS_LIMIT = f; };
+
+    static bool getFpsCounter() { return FPS_COUNTER; };
+    static void setFpsCounter(bool v) { FPS_COUNTER = v; };
+
+    static std::string getMetricsMode() { return METRICS_MODE; };
+    static void setMetricsMode(const std::string& m) { METRICS_MODE = m; };
 
 };
 

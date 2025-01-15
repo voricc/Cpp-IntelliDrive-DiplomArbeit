@@ -8,6 +8,8 @@
 #include "State.h"
 #include "Game.h"
 #include "Dropdown.h"
+#include "MenuState.h"
+#include "VariableManager.h"
 #include <SFML/Graphics.hpp>
 
 enum class SettingsTab {

@@ -16,7 +16,6 @@
 #include "State.h"
 #include "Tile.h"
 #include "ResourceManager.h"
-#include "SettingsManager.h"
 #include "PauseState.h"
 #include "DeathState.h"
 #include "Car.h"

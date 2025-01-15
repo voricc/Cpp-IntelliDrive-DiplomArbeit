@@ -19,6 +19,19 @@ float VariableManager::TILE_SIZE = 64;
 
 // Resources
 std::string VariableManager::FONT_RUBIK_REGULAR = "resources/Fonts/Rubik-Regular.ttf";
+std::string VariableManager::FONT_UPHEAVAL_PRO = "resources/Fonts/UpheavalPRO.ttf";
+std::string VariableManager::FONT_MENU_TITLE = "resources/Fonts/MenuTitle-Font.ttf";
+
+std::string VariableManager::PATH_TO_CONFIG = "resources/config/config.json";
+std::string VariableManager::PATH_TO_TILE_CONFIG = "resources/Tiles/Tiles.csv";
+std::string VariableManager::PATH_TO_CAR_CONFIG = "resources/config/cars.csv";
+std::string VariableManager::PATH_TO_LEVELS = "resources/Levels/";
+std::string VariableManager::PATH_TO_BACKGROUNDS = "resources/Backgrounds/background";
+
+std::string VariableManager::IMAGE_CAR_CHOOSING_ARROW_LEFT = "resources/GUI/arrowleft.png";
+std::string VariableManager::IMAGE_CAR_CHOOSING_ARROW_RIGHT = "resources/GUI/arrowright.png";
+std::string VariableManager::IMAGE_GAME_BACKGROUND = PATH_TO_BACKGROUNDS + "5.png";
+std::string VariableManager::IMAGE_BACKGROUND_CAR_CHOOSING = "resources/Backgrounds/carchoosingstatebackground.png";
 
 // AI
 int VariableManager::RAY_AMOUNT = 5;
@@ -47,6 +60,18 @@ bool VariableManager::SHOW_CHECKPOINTS = false;
 bool VariableManager::SHOW_RAYS = false;
 float VariableManager::SHOW_CARS_PERCENTAGE = 1.0f;
 
+// Game
+bool VariableManager::AI_MODE = false;
+
+// Settings
+std::string VariableManager::UNITS = "Metric";
+std::string VariableManager::DISPLAY_MODE = "fullscreen";
+std::string VariableManager::RESOLUTION = "1920x1080";
+bool VariableManager::VSYNC = false;
+int VariableManager::FPS_LIMIT = 120;
+bool VariableManager::FPS_COUNTER = false;
+std::string VariableManager::METRICS_MODE = "simple";
+
 // Save function
 void VariableManager::saveToJson(const std::string& filePath) {
     nlohmann::json jsonData;
@@ -63,6 +88,19 @@ void VariableManager::saveToJson(const std::string& filePath) {
 
     // Resources
     jsonData["FONT_RUBIK_REGULAR"] = FONT_RUBIK_REGULAR;
+    jsonData["FONT_UPHEAVAL_PRO"] = FONT_UPHEAVAL_PRO;
+    jsonData["FONT_MENU_TITLE"] = FONT_MENU_TITLE;
+
+    jsonData["PATH_TO_CONFIG"] = PATH_TO_CONFIG;
+    jsonData["PATH_TO_TILE_CONFIG"] = PATH_TO_TILE_CONFIG;
+    jsonData["PATH_TO_CAR_CONFIG"] = PATH_TO_CAR_CONFIG;
+    jsonData["PATH_TO_LEVELS"] = PATH_TO_LEVELS;
+    jsonData["PATH_TO_BACKGROUNDS"] = PATH_TO_BACKGROUNDS;
+
+    jsonData["IMAGE_CAR_CHOOSING_ARROW_LEFT"] = IMAGE_CAR_CHOOSING_ARROW_LEFT;
+    jsonData["IMAGE_CAR_CHOOSING_ARROW_RIGHT"] = IMAGE_CAR_CHOOSING_ARROW_RIGHT;
+    jsonData["IMAGE_GAME_BACKGROUND"] = IMAGE_GAME_BACKGROUND;
+    jsonData["IMAGE_BACKGROUND_CAR_CHOOSING"] = IMAGE_BACKGROUND_CAR_CHOOSING;
 
     // AI
     jsonData["RAY_AMOUNT"] = RAY_AMOUNT;
@@ -85,6 +123,18 @@ void VariableManager::saveToJson(const std::string& filePath) {
     jsonData["SHOW_CHECKPOINTS"] = SHOW_CHECKPOINTS;
     jsonData["SHOW_RAYS"] = SHOW_RAYS;
     jsonData["SHOW_CARS_PERCENTAGE"] = SHOW_CARS_PERCENTAGE;
+
+    // Game
+    jsonData["AI_MODE"] = AI_MODE;
+
+    // Settings
+    jsonData["UNITS"] = UNITS;
+    jsonData["DISPLAY_MODE"] = DISPLAY_MODE;
+    jsonData["RESOLUTION"] = RESOLUTION;
+    jsonData["VSYNC"] = VSYNC;
+    jsonData["FPS_LIMIT"] = FPS_LIMIT;
+    jsonData["FPS_COUNTER"] = FPS_COUNTER;
+    jsonData["METRICS_MODE"] = METRICS_MODE;
 
     std::ofstream file(filePath);
     file << jsonData.dump(4);
@@ -113,6 +163,19 @@ void VariableManager::loadFromJson(const std::string& filePath) {
 
     // Resources
     FONT_RUBIK_REGULAR = jsonData.value("FONT_RUBIK_REGULAR", FONT_RUBIK_REGULAR);
+    FONT_UPHEAVAL_PRO = jsonData.value("FONT_UPHEAVAL_PRO", FONT_UPHEAVAL_PRO);
+    FONT_MENU_TITLE = jsonData.value("FONT_MENU_TITLE", FONT_MENU_TITLE);
+
+    PATH_TO_CONFIG = jsonData.value("PATH_TO_CONFIG", PATH_TO_CONFIG);
+    PATH_TO_TILE_CONFIG = jsonData.value("PATH_TO_TILE_CONFIG", PATH_TO_TILE_CONFIG);
+    PATH_TO_CAR_CONFIG = jsonData.value("PATH_TO_CAR_CONFIG", PATH_TO_CAR_CONFIG);
+    PATH_TO_LEVELS = jsonData.value("PATH_TO_LEVELS", PATH_TO_LEVELS);
+    PATH_TO_BACKGROUNDS = jsonData.value("PATH_TO_BACKGROUNDS", PATH_TO_BACKGROUNDS);
+
+    IMAGE_CAR_CHOOSING_ARROW_LEFT = jsonData.value("IMAGE_CAR_CHOOSING_ARROW_LEFT", IMAGE_CAR_CHOOSING_ARROW_LEFT);
+    IMAGE_CAR_CHOOSING_ARROW_RIGHT = jsonData.value("IMAGE_CAR_CHOOSING_ARROW_RIGHT", IMAGE_CAR_CHOOSING_ARROW_RIGHT);
+    IMAGE_GAME_BACKGROUND = jsonData.value("IMAGE_GAME_BACKGROUND", IMAGE_GAME_BACKGROUND);
+    IMAGE_BACKGROUND_CAR_CHOOSING = jsonData.value("IMAGE_BACKGROUND_CAR_CHOOSING", IMAGE_BACKGROUND_CAR_CHOOSING);
 
     // AI
     RAY_AMOUNT = jsonData.value("RAY_AMOUNT", RAY_AMOUNT);
@@ -135,4 +198,16 @@ void VariableManager::loadFromJson(const std::string& filePath) {
     SHOW_CHECKPOINTS = jsonData.value("SHOW_CHECKPOINTS", SHOW_CHECKPOINTS);
     SHOW_RAYS = jsonData.value("SHOW_RAYS", SHOW_RAYS);
     SHOW_CARS_PERCENTAGE = jsonData.value("SHOW_CARS_PERCENTAGE", SHOW_CARS_PERCENTAGE);
+
+    // Game
+    if(jsonData.contains("AI_MODE")) AI_MODE = jsonData["AI_MODE"].get<bool>();
+
+    // Settings
+    if(jsonData.contains("UNITS")) UNITS = jsonData["UNITS"].get<std::string>();
+    if(jsonData.contains("DISPLAY_MODE")) DISPLAY_MODE = jsonData["DISPLAY_MODE"].get<std::string>();
+    if(jsonData.contains("RESOLUTION")) RESOLUTION = jsonData["RESOLUTION"].get<std::string>();
+    if(jsonData.contains("VSYNC")) VSYNC = jsonData["VSYNC"].get<bool>();
+    if(jsonData.contains("FPS_LIMIT")) FPS_LIMIT = jsonData["FPS_LIMIT"].get<int>();
+    if(jsonData.contains("FPS_COUNTER")) FPS_COUNTER = jsonData["FPS_COUNTER"].get<bool>();
+    if(jsonData.contains("METRICS_MODE")) METRICS_MODE = jsonData["METRICS_MODE"].get<std::string>();
 }

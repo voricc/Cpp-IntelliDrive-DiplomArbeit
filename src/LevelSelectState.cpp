@@ -70,15 +70,14 @@ void LevelSelectState::handleInput(Game& game) {
                 if (levelButtons[i].getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                     std::string selectedLevel = "resources/Levels/" + levelFiles[i + currentPage * levelsPerPage];
 
-                    // Dynamisch den Spielzustand bestimmen basierend auf ai_mode und debug_mode
-                    SettingsManager& sm = SettingsManager::getInstance();
-                    bool aiMode = sm.getAIMode();
-                    bool debugMode = sm.getDebugMode();
+                    // Dynamisch den Spielzustand bestimmen basierend auf AI_MODE und debug_mode
+                    bool aiMode = VariableManager::getAiMode();
+                    //bool debugMode = VariableManager::getD;
 
                     if (aiMode) {
-                        game.changeState(std::make_shared<AiGameState>(game, selectedLevel, debugMode));
+                        game.changeState(std::make_shared<AiGameState>(game, selectedLevel/*, debugMode*/));
                     } else {
-                        game.changeState(std::make_shared<GameState>(game, selectedLevel, debugMode));
+                        game.changeState(std::make_shared<GameState>(game, selectedLevel/*, debugMode*/));
                     }
                 }
             }

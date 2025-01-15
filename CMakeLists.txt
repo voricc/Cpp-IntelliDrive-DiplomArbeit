@@ -27,7 +27,6 @@ set(SOURCE_FILES
         src/GameState.cpp
         src/AiGameState.cpp
         src/SettingsState.cpp
-        src/SettingsManager.cpp
         src/MetricsManager.cpp
         src/DropDown.cpp
         src/Game.cpp
@@ -47,7 +46,6 @@ set(HEADER_FILES
         include/Tile.h
         include/AiGameState.h
         include/SettingsState.h
-        include/SettingsManager.h
         include/MetricsManager.h
         include/DropDown.h
         include/Game.h

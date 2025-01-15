@@ -4,9 +4,9 @@
 
 #include "../include/ResourceManager.h"
 
-ResourceManager& ResourceManager::getInstance() {
-    static ResourceManager instance;
-    return instance;
+
+void ResourceManager::loadAllKnownResources() {
+
 }
 
 void ResourceManager::loadFont(const std::string& name, const std::string& filename) {
@@ -51,30 +51,6 @@ sf::Texture& ResourceManager::getTexture(const std::string& name) {
     }
 }
 
-void ResourceManager::saveTilesToCSV(const std::string& filename) {
-    std::ofstream file(filename);
-
-    if (!file.is_open()) {
-        std::cerr << "Error opening file for saving" << std::endl;
-        return;
-    }
-
-    for (const auto& tile : tiles) {
-        file << tile.getTexturePath();
-
-        file << "," << tile.getCollisionPolygon().size();
-
-        for (const auto& point : tile.getCollisionPolygon()) {
-            file << "," << point.x << "," << point.y;
-        }
-
-        file << std::endl;
-    }
-
-    file.close();
-    std::cout << "Tiles saved to " << filename << std::endl;
-}
-
 void ResourceManager::loadTilesFromCSV(const std::string& filename) {
     std::ifstream file(filename);
     tiles.clear();
@@ -117,6 +93,6 @@ void ResourceManager::loadTilesFromCSV(const std::string& filename) {
     return;
 }
 
-bool ResourceManager::textureExists(const std::string& textureKey) const {
+bool ResourceManager::textureExists(const std::string& textureKey) {
     return textures.find(textureKey) != textures.end();
 }

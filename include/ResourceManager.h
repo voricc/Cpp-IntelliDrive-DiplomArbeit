@@ -16,32 +16,28 @@
 
 class ResourceManager {
 public:
-    static ResourceManager& getInstance();
+    static void loadAllKnownResources();
 
-    void loadFont(const std::string& name, const std::string& filename);
-    [[ nodiscard ]] sf::Font& getFont(const std::string& name);
+    static void loadFont(const std::string& name, const std::string& filename);
+    [[ nodiscard ]] static sf::Font& getFont(const std::string& name);
 
-    bool loadTexture(const std::string &name, const std::string &filename);
-    void setTexture(const std::string &name, const std::string &filename);
+    static bool loadTexture(const std::string &name, const std::string &filename);
+    static void setTexture(const std::string &name, const std::string &filename);
 
-    [[ nodiscard ]] sf::Texture& getTexture(const std::string& name);
+    [[ nodiscard ]] static sf::Texture& getTexture(const std::string& name);
 
-    void setTiles(std::vector<Tile> &t) { tiles = t; };
-    [[ nodiscard ]] std::vector<Tile> &getTiles() { return tiles; };
+    [[ nodiscard ]] static std::vector<Tile> &getTiles() { return tiles; };
 
-    void saveTilesToCSV(const std::string& filename);
-    void loadTilesFromCSV(const std::string& filename);
-    bool textureExists(const std::string& textureKey) const;
+    static void loadTilesFromCSV(const std::string& filename);
+    static bool textureExists(const std::string& textureKey);
 
-    void setTile(int i, Tile &t) { tiles[i] = t; };
-    [[ nodiscard ]] Tile &getTile(int i) { return tiles[i]; };
+    static void setTile(int i, Tile &t) { tiles[i] = t; };
+    [[ nodiscard ]] static Tile &getTile(int i) { return tiles[i]; };
 
 private:
-    ResourceManager() = default;
-
-    std::unordered_map<std::string, sf::Font> fonts;
-    std::unordered_map<std::string, sf::Texture> textures;
-    std::vector<Tile> tiles;
+    static std::unordered_map<std::string, sf::Font> fonts;
+    static std::unordered_map<std::string, sf::Texture> textures;
+    static std::vector<Tile> tiles;
 };
 
 #endif // RESOURCEMANAGER_H

@@ -3,8 +3,6 @@
 //
 
 #include "SettingsState.h"
-#include "SettingsManager.h"
-#include "MenuState.h"
 
 SettingsState::SettingsState() : currentTab(SettingsTab::General), hoverSave(false), hoverBack(false) {
     font.loadFromFile("resources/Fonts/Rubik-Regular.ttf");
@@ -44,15 +42,13 @@ SettingsState::SettingsState() : currentTab(SettingsTab::General), hoverSave(fal
 }
 
 void SettingsState::loadUI() {
-    SettingsManager& sm = SettingsManager::getInstance();
-
     aiModeText.setFont(font);
     aiModeText.setString("AI Mode");
     aiModeText.setCharacterSize(30);
     aiModeText.setPosition(200,200);
 
     aiModeValue.setFont(font);
-    aiModeValue.setString(sm.getAIMode() ? "On" : "Off");
+    aiModeValue.setString(VariableManager::getAiMode() ? "On" : "Off");
     aiModeValue.setCharacterSize(30);
     aiModeValue.setPosition(500,200);
 
@@ -61,13 +57,13 @@ void SettingsState::loadUI() {
     unitsText.setCharacterSize(30);
     unitsText.setPosition(200,250);
     unitsDropdown = new Dropdown(font, {"Metric","Imperial"}, 500,250,200,40);
-    unitsDropdown->setSelectedItem(sm.getUnits());
+    unitsDropdown->setSelectedItem(VariableManager::getUnits());
 
     displayModeDropdown = new Dropdown(font, {"fullscreen","windowed","borderless"}, 500,200,250,40);
-    displayModeDropdown->setSelectedItem(sm.getDisplayMode());
+    displayModeDropdown->setSelectedItem(VariableManager::getDisplayMode());
 
     resolutionDropdown = new Dropdown(font, {"1280x720","1920x1080","2560x1440"}, 500,250,250,40);
-    resolutionDropdown->setSelectedItem(sm.getResolution());
+    resolutionDropdown->setSelectedItem(VariableManager::getResolution());
 
     vsyncText.setFont(font);
     vsyncText.setString("VSync");
@@ -75,7 +71,7 @@ void SettingsState::loadUI() {
     vsyncText.setPosition(200,300);
 
     vsyncValue.setFont(font);
-    vsyncValue.setString(sm.getVSync() ? "On" : "Off");
+    vsyncValue.setString(VariableManager::getVSync() ? "On" : "Off");
     vsyncValue.setCharacterSize(30);
     vsyncValue.setPosition(500,300);
 
@@ -85,19 +81,19 @@ void SettingsState::loadUI() {
     fpsText.setPosition(200,350);
 
     fpsValue.setFont(font);
-    fpsValue.setString(std::to_string(sm.getFPSLimit()));
+    fpsValue.setString(std::to_string(VariableManager::getFpsLimit()));
     fpsValue.setCharacterSize(30);
     fpsValue.setPosition(500,350);
 
-    debugModeText.setFont(font);
-    debugModeText.setString("Debug Mode");
-    debugModeText.setCharacterSize(30);
-    debugModeText.setPosition(200,200);
-
-    debugModeValue.setFont(font);
-    debugModeValue.setString(sm.getDebugMode() ? "On" : "Off");
-    debugModeValue.setCharacterSize(30);
-    debugModeValue.setPosition(500,200);
+//    debugModeText.setFont(font);
+//    debugModeText.setString("Debug Mode");
+//    debugModeText.setCharacterSize(30);
+//    debugModeText.setPosition(200,200);
+//
+//    debugModeValue.setFont(font);
+//    debugModeValue.setString(VariableManager::getDebugMode() ? "On" : "Off");
+//    debugModeValue.setCharacterSize(30);
+//    debugModeValue.setPosition(500,200);
 
     fpsCounterText.setFont(font);
     fpsCounterText.setString("FPS Counter");
@@ -105,7 +101,7 @@ void SettingsState::loadUI() {
     fpsCounterText.setPosition(200,250);
 
     fpsCounterValue.setFont(font);
-    fpsCounterValue.setString(sm.getFPSCounter() ? "On" : "Off");
+    fpsCounterValue.setString(VariableManager::getFpsCounter() ? "On" : "Off");
     fpsCounterValue.setCharacterSize(30);
     fpsCounterValue.setPosition(500,250);
 
@@ -114,7 +110,7 @@ void SettingsState::loadUI() {
     metricsModeText.setCharacterSize(30);
     metricsModeText.setPosition(200,300);
     metricsDropdown = new Dropdown(font, {"simple","advanced"}, 500,300,200,40);
-    metricsDropdown->setSelectedItem(sm.getMetricsMode());
+    metricsDropdown->setSelectedItem(VariableManager::getMetricsMode());
 }
 
 void SettingsState::handleInput(Game& game) {
@@ -250,44 +246,43 @@ void SettingsState::switchTab(SettingsTab t) {
 }
 
 void SettingsState::applyChanges(Game& game) {
-    SettingsManager& sm = SettingsManager::getInstance();
-    sm.setAIMode(aiModeValue.getString() == "On");
-    sm.setUnits(unitsDropdown->getSelectedItem());
-    sm.setDisplayMode(displayModeDropdown->getSelectedItem());
-    sm.setResolution(resolutionDropdown->getSelectedItem());
-    sm.setVSync(vsyncValue.getString() == "On");
+    VariableManager::setAiMode(aiModeValue.getString() == "On");
+    VariableManager::setUnits(unitsDropdown->getSelectedItem());
+    VariableManager::setDisplayMode(displayModeDropdown->getSelectedItem());
+    VariableManager::setResolution(resolutionDropdown->getSelectedItem());
+    VariableManager::setVSync(vsyncValue.getString() == "On");
 
     if (vsyncValue.getString() == "Off") {
-        sm.setFPSLimit(std::stoi(fpsValue.getString().toAnsiString()));
+        VariableManager::setFpsLimit(std::stoi(fpsValue.getString().toAnsiString()));
     } else {
-        sm.setFPSLimit(120);
+        VariableManager::setFpsLimit(120);
     }
 
-    sm.setDebugMode(debugModeValue.getString() == "On");
-    sm.setFPSCounter(fpsCounterValue.getString() == "On");
-    sm.setMetricsMode(metricsDropdown->getSelectedItem());
-    sm.save("resources/config/config.json");
+    //VariableManager::setDebugMode(debugModeValue.getString() == "On");
+    VariableManager::setFpsCounter(fpsCounterValue.getString() == "On");
+    VariableManager::setMetricsMode(metricsDropdown->getSelectedItem());
+    VariableManager::saveToJson("resources/config/config.json");
 
-    // Extract resolution
-    std::string resStr = sm.getResolution();
+    // Extract RESOLUTION
+    std::string resStr = VariableManager::getResolution();
     int width = std::stoi(resStr.substr(0, resStr.find('x')));
     int height = std::stoi(resStr.substr(resStr.find('x') + 1));
 
     // Determine window style based on display mode
     sf::Uint32 style;
-    if (sm.getDisplayMode() == "fullscreen") {
+    if (VariableManager::getDisplayMode() == "fullscreen") {
         style = sf::Style::Fullscreen;
-    } else if (sm.getDisplayMode() == "windowed") {
+    } else if (VariableManager::getDisplayMode() == "windowed") {
         style = sf::Style::Default;
-    } else if (sm.getDisplayMode() == "borderless") {
+    } else if (VariableManager::getDisplayMode() == "borderless") {
         style = sf::Style::None;
     }
 
-    // Recreate the window at the selected resolution without scaling
+    // Recreate the window at the selected RESOLUTION without scaling
     game.window.create(sf::VideoMode(width, height), "IntelliDrive", style);
 
     // Apply VSync and FPS limit
-    game.window.setVerticalSyncEnabled(sm.getVSync());
-    game.window.setFramerateLimit(sm.getFPSLimit());
+    game.window.setVerticalSyncEnabled(VariableManager::getVSync());
+    game.window.setFramerateLimit(VariableManager::getFpsLimit());
 }
 

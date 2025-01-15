@@ -8,6 +8,13 @@
 
 Game::Game() : window(sf::VideoMode(1920, 1080), "IntelliDrive", sf::Style::Fullscreen)
 {
+    // Load Variables
+    VariableManager::loadFromJson(VariableManager::getPathToConfig());
+    // Apply VSync and FPS limit
+    window.setVerticalSyncEnabled(VariableManager::getVSync());
+    window.setFramerateLimit(VariableManager::getFpsLimit());
+
+
     ResourceManager& resourceManager = ResourceManager::getInstance();
     resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     car = {};
