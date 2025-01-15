@@ -97,18 +97,9 @@ void GameStateParent::loadLevelFromCSV(const std::string &filename, Game &game) 
 }
 
 void GameStateParent::loadBackground(Game &game) {
-    ResourceManager &resourceManager = ResourceManager::getInstance();
-
     std::cout << "[DEBUG] Setting up GameState background\n";
 
-    if (!resourceManager.textureExists("background5")) {
-        std::cout << "[DEBUG] Background texture not found. Loading texture 'background5'\n";
-        resourceManager.loadTexture("background5", "resources/Backgrounds/background5.png");
-    } else {
-        std::cout << "[DEBUG] Background texture 'background5' already loaded\n";
-    }
-
-    sf::Texture& backgroundTexture = resourceManager.getTexture("background5");
+    sf::Texture& backgroundTexture = ResourceManager::getTexture("Background5");
     if (backgroundTexture.getSize().x == 0 || backgroundTexture.getSize().y == 0) {
         std::cerr << "[DEBUG] Background texture is invalid (size is zero)\n";
     } else {
@@ -126,13 +117,11 @@ void GameStateParent::loadBackground(Game &game) {
 
 GameStateParent::GameStateParent(Game &game, const std::string &levelFile, bool debugMode) {
     this->debugMode = debugMode;
-    ResourceManager& resourceManager = ResourceManager::getInstance();
     std::cout << "[DEBUG] Initializing GameStatee\n";
     placedTileSprites.clear();
     placedTileIDs.clear();
     std::cout << "[DEBUG] Loading tiles from CSV\n";
-    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
-    tiles = resourceManager.getTiles();
+    tiles = ResourceManager::getTiles();
     loadLevelFromCSV(levelFile, game);
     loadLevelFromCSV(levelFile, game);
     loadBackground(game);

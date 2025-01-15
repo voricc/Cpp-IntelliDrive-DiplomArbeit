@@ -12,16 +12,8 @@
 MenuState::MenuState()
     : backgroundIndex(1) {
 
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
-    std::string fontPath = "resources/Fonts/Rubik-Regular.ttf";
-    std::string menuTitlePath = "resources/Fonts/MenuTitle-Font.ttf";
-
-    resourceManager.loadFont("Rubik-Regular", fontPath);
-    resourceManager.loadFont("MenuTitle-Font", menuTitlePath);
-
-    Textfont = resourceManager.getFont("Rubik-Regular");
-    Menufont = resourceManager.getFont("MenuTitle-Font");
+    Textfont = ResourceManager::getFont("Rubik-Regular");
+    Menufont = ResourceManager::getFont("MenuTitle");
 
     loadBackground();
 
@@ -107,13 +99,9 @@ void MenuState::initializeText(sf::Text& textItem, const sf::Font& font, const s
 }
 
 void MenuState::loadBackground() {
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
     std::string backgroundImagePath = "resources/Backgrounds/background" + std::to_string(backgroundIndex) + ".png";
 
-    resourceManager.loadTexture("MenuBackground_" + std::to_string(backgroundIndex), backgroundImagePath);
-
-    backgroundTexture = resourceManager.getTexture("MenuBackground_" + std::to_string(backgroundIndex));
+    backgroundTexture = ResourceManager::getTexture("Background" + std::to_string(backgroundIndex));
     backgroundSprite.setTexture(backgroundTexture);
 }
 

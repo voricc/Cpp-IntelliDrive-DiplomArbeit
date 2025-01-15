@@ -14,13 +14,8 @@
 CarChoosingState::CarChoosingState() {
     defaultWindowSize = sf::Vector2u(1920, 1080);
 
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
-    resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
-    resourceManager.loadFont("UpheavalPRO", "resources/Fonts/UpheavalPRO.ttf");
-
-    font = resourceManager.getFont("Rubik-Regular");
-    titlefont = resourceManager.getFont("UpheavalPRO");
+    font = ResourceManager::getFont("Rubik-Regular");
+    titlefont = ResourceManager::getFont("UpheavalPRO");
 
     loadBackground();
 
@@ -106,12 +101,7 @@ void CarChoosingState::renderLogos(Game& game) {
 }
 
 void CarChoosingState::loadBackground() {
-    std::string backgroundImagePath = "resources/Backgrounds/carchoosingstatebackground.png";
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
-    resourceManager.loadTexture("CarChoosingBackground", backgroundImagePath);
-
-    backgroundTexture = resourceManager.getTexture("CarChoosingBackground");
+    backgroundTexture = ResourceManager::getTexture("BackgroundCarChoosing");
     backgroundSprite.setTexture(backgroundTexture);
 }
 

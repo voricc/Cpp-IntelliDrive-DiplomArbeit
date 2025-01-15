@@ -7,11 +7,7 @@
 #include "../include/MenuState.h"
 
 PauseState::PauseState() {
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
-    resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
-
-    font = resourceManager.getFont("Rubik-Regular");
+    font = ResourceManager::getFont("Rubik-Regular");
     
     pauseText.setFont(font);
     pauseText.setString("Paused");

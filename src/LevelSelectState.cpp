@@ -11,15 +11,10 @@
 LevelSelectState::LevelSelectState() : currentPage(0), levelsPerPage(6) {
     defaultWindowSize = sf::Vector2u(1920, 1080);
 
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-    resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
-    resourceManager.loadFont("UpheavalPRO", "resources/Fonts/UpheavalPRO.ttf");
+    font = ResourceManager::getFont("Rubik-Regular");
+    titlefont = ResourceManager::getFont("UpheavalPRO");
 
-    font = resourceManager.getFont("Rubik-Regular");
-    titlefont = resourceManager.getFont("UpheavalPRO");
-
-    resourceManager.loadTexture("LevelSelectBackground", "resources/backgrounds/carchoosingstatebackground.png");
-    backgroundTexture = resourceManager.getTexture("LevelSelectBackground");
+    backgroundTexture = ResourceManager::getTexture("BackgroundCarChoosing");
     backgroundSprite.setTexture(backgroundTexture);
 
     titleText.setFont(titlefont);
@@ -28,19 +23,15 @@ LevelSelectState::LevelSelectState() : currentPage(0), levelsPerPage(6) {
     titleText.setFillColor(sf::Color::White);
     titleText.setPosition(defaultWindowSize.x / 2.0f - (titleText.getLocalBounds().width / 2), 40);
 
-    resourceManager.loadTexture("ArrowLeft", "resources/GUI/arrowleft.png");
-    resourceManager.loadTexture("ArrowRight", "resources/GUI/arrowright.png");
-
-    arrowLeftTexture = resourceManager.getTexture("ArrowLeft");
-    arrowRightTexture = resourceManager.getTexture("ArrowRight");
+    arrowLeftTexture = ResourceManager::getTexture("CarChoosingArrowLeft");
+    arrowRightTexture = ResourceManager::getTexture("CarChoosingArrowRight");
     arrowLeftSprite.setTexture(arrowLeftTexture);
     arrowRightSprite.setTexture(arrowRightTexture);
 
     loadLevelFiles();
     createLevelButtons();
 
-    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
-    tiles = resourceManager.getTiles();
+    tiles = ResourceManager::getTiles();
 }
 
 void LevelSelectState::loadLevelFiles() {
@@ -70,15 +61,14 @@ void LevelSelectState::handleInput(Game& game) {
                 if (levelButtons[i].getGlobalBounds().contains(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y))) {
                     std::string selectedLevel = "resources/Levels/" + levelFiles[i + currentPage * levelsPerPage];
 
-                    // Dynamisch den Spielzustand bestimmen basierend auf ai_mode und debug_mode
-                    SettingsManager& sm = SettingsManager::getInstance();
-                    bool aiMode = sm.getAIMode();
-                    bool debugMode = sm.getDebugMode();
+                    // Dynamisch den Spielzustand bestimmen basierend auf AI_MODE und debug_mode
+                    bool aiMode = VariableManager::getAiMode();
+                    //bool debugMode = VariableManager::getD;
 
                     if (aiMode) {
-                        game.changeState(std::make_shared<AiGameState>(game, selectedLevel, debugMode));
+                        game.changeState(std::make_shared<AiGameState>(game, selectedLevel/*, debugMode*/));
                     } else {
-                        game.changeState(std::make_shared<GameState>(game, selectedLevel, debugMode));
+                        game.changeState(std::make_shared<GameState>(game, selectedLevel/*, debugMode*/));
                     }
                 }
             }
@@ -149,8 +139,6 @@ void LevelSelectState::render(Game& game) {
 }
 
 void LevelSelectState::loadLevelPreview(Game& game, const std::string& filename, sf::RectangleShape& preview) {
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
     if (cachedPreviews.find(filename) != cachedPreviews.end()) {
         for (const auto& element : cachedPreviews[filename]) {
             game.window.draw(element);
