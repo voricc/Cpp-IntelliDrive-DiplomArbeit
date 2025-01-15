@@ -4,7 +4,7 @@
 
 # include "GameState.h"
 
-GameState::GameState(Game &game, const std::string &levelFile, bool debugMode) : car(game.getCar()), GameStateParent(game, levelFile, debugMode) {
+GameState::GameState(Game &game, const std::string &levelFile) : car(game.getCar()), GameStateParent(game, levelFile) {
     initializeCar();
 }
 
@@ -45,7 +45,6 @@ void GameState::render(Game &game) {
     auto &placedTileIDs = this->getPlacedTileIDs();
     auto &placedTileSprites = this->getPlacedTileSprites();
     auto &tiles = this->getTiles();
-    bool debugMode = this->getDebugMode();
 
     game.window.clear();
     game.window.draw(backgroundSprite);
@@ -58,18 +57,6 @@ void GameState::render(Game &game) {
             if (tileID >= 0) {
                 Tile& tile = tiles[tileID];
                 sf::ConvexShape collisionShape = tile.collisionShape;
-
-                // Set visual properties for debugging
-                if (debugMode)
-                {
-                    collisionShape.setFillColor(sf::Color(255, 0, 0, 100)); // Semi-transparent red
-                    collisionShape.setOutlineColor(sf::Color::Red);
-                    collisionShape.setOutlineThickness(1.0f);
-
-                    // Apply the tile's transform
-                    sf::Transform transform = placedTileSprites[x][y].getTransform();
-                    game.window.draw(collisionShape, transform);
-                }
             }
         }
     }

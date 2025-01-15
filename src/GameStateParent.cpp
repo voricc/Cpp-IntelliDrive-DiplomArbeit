@@ -115,8 +115,7 @@ void GameStateParent::loadBackground(Game &game) {
     );
 }
 
-GameStateParent::GameStateParent(Game &game, const std::string &levelFile, bool debugMode) {
-    this->debugMode = debugMode;
+GameStateParent::GameStateParent(Game &game, const std::string &levelFile) {
     std::cout << "[DEBUG] Initializing GameStatee\n";
     placedTileSprites.clear();
     placedTileIDs.clear();

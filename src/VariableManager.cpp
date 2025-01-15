@@ -34,25 +34,25 @@ std::string VariableManager::IMAGE_GAME_BACKGROUND = PATH_TO_BACKGROUNDS + "5.pn
 std::string VariableManager::IMAGE_BACKGROUND_CAR_CHOOSING = "resources/Backgrounds/carchoosingstatebackground.png";
 
 // AI
-int VariableManager::RAY_AMOUNT = 5;
+int VariableManager::RAY_AMOUNT = 8;
 float VariableManager::AI_FOV = 270.0f;
-int VariableManager::NETWORKS_AMOUNT = 5000;
+int VariableManager::NETWORKS_AMOUNT = 200;
 float VariableManager::AI_INITIAL_RANDOM_VALUES_MAX = 1.6f;
 bool VariableManager::AI_INITIAL_RANDOM_VALUES_UNIFORM = true;
-std::vector<int> VariableManager::AI_TOPOLOGY = {RAY_AMOUNT, 4, OUTPUT_NEURONS};
+std::vector<int> VariableManager::AI_TOPOLOGY = {RAY_AMOUNT, 6, OUTPUT_NEURONS};
 std::vector<Utility::Activations> VariableManager::AI_ACTIVATIONS = {
         Utility::Activations::Tanh,
         Utility::Activations::Tanh
 };
 
 // Evolutionary Algorithm
-int VariableManager::AI_WINNERS = 10;
+int VariableManager::AI_WINNERS = 5;
 float VariableManager::CHECKPOINT_POINTS = 25;
 float VariableManager::ROTATION_PENALTY;
 float VariableManager::CHECKPOINT_RADIUS = 140.0f;
 float VariableManager::BACKWARDS_MOVEMENT_PENALTY;
 float VariableManager::RESTART_ON_DEAD_PERCENTAGE = 0.995;
-float VariableManager::MUTATION_INDEX = 0.04f;
+float VariableManager::MUTATION_INDEX = 0.01f;
 
 // DEBUG - RENDER
 bool VariableManager::SHOW_COLLIDERS = false;

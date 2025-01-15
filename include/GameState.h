@@ -21,7 +21,7 @@ private:
     void update(Game &game) override;
     void handleInput(Game &game) override;
 public:
-    GameState(Game &game, const std::string &levelFile, bool debugMode = false);
+    GameState(Game &game, const std::string &levelFile);
 
     explicit GameState(Game &game) : car(game.getCar()), GameStateParent(game) {
         initializeCar();

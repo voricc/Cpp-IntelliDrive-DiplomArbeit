@@ -15,8 +15,6 @@
 #include "../vendors/ai/NeuralNetwork/NeuralNetwork.h"
 #include "Car.h"
 
-enum Debug : int {None = 0, Checkpoints = 1, Rays = 2, Hitboxes = 3, BestCar = 4};
-
 struct Player {
     std::vector<float> rayDistances;
     std::vector<sf::VertexArray> rays;
@@ -35,8 +33,6 @@ private:
     bool forceReset = false;
 
     std::vector<float> rayAngles;
-
-    Debug debug = None;
 
     int currentGen = 0;
     int deadCars = 0;
@@ -58,7 +54,7 @@ private:
 
     void updateAI();
 public:
-    AiGameState(Game &game, const std::string &levelFile, bool debugMode = false);
+    AiGameState(Game &game, const std::string &levelFile);
 
     explicit AiGameState(Game &game) : GameStateParent(game) {
         initializeCar();
