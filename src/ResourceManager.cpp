@@ -4,9 +4,37 @@
 
 #include "../include/ResourceManager.h"
 
+// Definition der statischen Variablen
+std::unordered_map<std::string, sf::Font> ResourceManager::fonts;
+std::unordered_map<std::string, sf::Texture> ResourceManager::textures;
+std::vector<Tile> ResourceManager::tiles;
+
 
 void ResourceManager::loadAllKnownResources() {
+    std::cout << "Loading resources...\n";
 
+    // Load all known fonts
+    loadFont("Rubik-Regular", VariableManager::getFontRubikRegular());
+    loadFont("UpheavalPRO", VariableManager::getFontUpheavalPro());
+    loadFont("MenuTitle", VariableManager::getFontMenuTitle());
+
+    // Load all tiles
+    loadTilesFromCSV(VariableManager::getPathToTileConfig());
+
+    // Load all known textures
+    loadTexture("CarChoosingArrowLeft", VariableManager::getImageCarChoosingArrowLeft());
+    loadTexture("CarChoosingArrowRight", VariableManager::getImageCarChoosingArrowRight());
+    loadTexture("GameBackground", VariableManager::getImageGameBackground());
+    loadTexture("BackgroundCarChoosing", VariableManager::getImageBackgroundCarChoosing());
+
+    // Load multiple background images (e.g., background1.png, background2.png, etc.)
+    for (int i = 1; i <= 5; ++i) {
+        std::string backgroundName = "Background" + std::to_string(i);
+        std::string backgroundPath = VariableManager::getPathToBackgrounds() + std::to_string(i) + ".png";
+        loadTexture(backgroundName, backgroundPath);
+    }
+
+    std::cout << "All known resources loaded successfully." << std::endl;
 }
 
 void ResourceManager::loadFont(const std::string& name, const std::string& filename) {

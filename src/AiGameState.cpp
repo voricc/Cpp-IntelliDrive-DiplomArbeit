@@ -23,10 +23,7 @@ AiGameState::AiGameState(Game &game, const std::string &levelFile, bool debugMod
     this->initializeRays();
 
     // Load Font
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-    std::string fontPath = "resources/Fonts/Rubik-Regular.ttf";
-    resourceManager.loadFont("Rubik-Regular", fontPath);
-    textFont = resourceManager.getFont("Rubik-Regular");
+    textFont = ResourceManager::getFont("Rubik-Regular");
 }
 
 void AiGameState::initializeCar() {

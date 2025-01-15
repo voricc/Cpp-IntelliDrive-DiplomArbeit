@@ -10,11 +10,7 @@
 #include "../include/ResourceManager.h"
 
 DeathState::DeathState() {
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
-    resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
-
-    font = resourceManager.getFont("Rubik-Regular");
+    font = ResourceManager::getFont("Rubik-Regular");
 
     initializeText(deathText, "You Crashed!", 40, 300.f, 150.f);
     initializeText(playAgainButton, "Press R to Play Again", 20, 250.f, 300.f);

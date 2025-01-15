@@ -52,7 +52,7 @@ private:
     const int maxFrameSamples = 300;
 
     void initializeText(sf::Text& text, float x, float y);
-    void parseCarDataLine(const std::string& line, carData& data, ResourceManager& resourceManager);
+    void parseCarDataLine(const std::string& line, carData& data);
     float calculateAverageFPS() const;
     float calculateOnePercentLowsFPS() const;
     void updateText(sf::Text& text, const std::string& label, float value);

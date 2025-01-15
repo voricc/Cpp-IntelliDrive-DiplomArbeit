@@ -30,16 +30,10 @@ LevelCreator::LevelCreator(Game& game) : GameState(game), showExplanation(true),
 }
 
 void LevelCreator::initializeResources(Game& game) {
-    ResourceManager& resourceManager = ResourceManager::getInstance();
+    tiles = ResourceManager::getTiles();
+    font = ResourceManager::getFont("Rubik-Regular");
 
-    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
-    tiles = resourceManager.getTiles();
-
-    resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
-    font = resourceManager.getFont("Rubik-Regular");
-
-    resourceManager.loadTexture("background5", "resources/Backgrounds/background5.png");
-    sf::Texture& backgroundTexture = resourceManager.getTexture("background5");
+    sf::Texture& backgroundTexture = ResourceManager::getTexture("Background5");
     backgroundSprite.setTexture(backgroundTexture);
 
     sf::Vector2u windowSize = game.window.getSize();

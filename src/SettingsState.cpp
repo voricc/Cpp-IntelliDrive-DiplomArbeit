@@ -5,7 +5,7 @@
 #include "SettingsState.h"
 
 SettingsState::SettingsState() : currentTab(SettingsTab::General), hoverSave(false), hoverBack(false) {
-    font.loadFromFile("resources/Fonts/Rubik-Regular.ttf");
+    font = ResourceManager::getFont("Rubik-Regular");
 
     generalTabText.setFont(font);
     generalTabText.setString("General");

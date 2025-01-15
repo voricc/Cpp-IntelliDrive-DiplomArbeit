@@ -10,18 +10,17 @@ Game::Game() : window(sf::VideoMode(1920, 1080), "IntelliDrive", sf::Style::Full
 {
     // Load Variables
     VariableManager::loadFromJson(VariableManager::getPathToConfig());
+    // Resource Manager
+    ResourceManager::loadAllKnownResources();
+
     // Apply VSync and FPS limit
     window.setVerticalSyncEnabled(VariableManager::getVSync());
     window.setFramerateLimit(VariableManager::getFpsLimit());
 
-
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     car = {};
     Utility::setup();
     loadCarData("resources/config/cars.csv");
     std::cout << "[DEBUG] Loading tiles from CSV\n";
-    resourceManager.loadTilesFromCSV("resources/Tiles/Tiles.csv");
     car.applyData(cars[0]);
     pushState(std::make_shared<MenuState>());
 
@@ -94,12 +93,10 @@ void Game::loadCarData(std::string path) {
     std::string line;
     int row = 0;
 
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
     while (getline(inputFile, line)) {
         if (row != 0) {
             carData data;
-            parseCarDataLine(line, data, resourceManager);
+            parseCarDataLine(line, data);
             cars.emplace_back(data);
         }
         row++;
@@ -126,11 +123,7 @@ void Game::calculateAndDisplayFPS() {
 }
 
 void Game::initializeText(sf::Text& text, float x, float y) {
-    ResourceManager& resourceManager = ResourceManager::getInstance();
-
-    resourceManager.loadFont("Rubik-Regular", "resources/Fonts/Rubik-Regular.ttf");
-
-    font = resourceManager.getFont("Rubik-Regular");
+    font = ResourceManager::getFont("Rubik-Regular");
 
     text.setFont(font);
     text.setCharacterSize(24);
@@ -138,7 +131,7 @@ void Game::initializeText(sf::Text& text, float x, float y) {
     text.setPosition(x, y);
 }
 
-void Game::parseCarDataLine(const std::string& line, carData& data, ResourceManager& resourceManager) {
+void Game::parseCarDataLine(const std::string& line, carData& data) {
     std::stringstream ss(line);
     std::string token;
     int entry = 0;
@@ -150,8 +143,8 @@ void Game::parseCarDataLine(const std::string& line, carData& data, ResourceMana
                 data.name = token;
                 break;
             case 1:
-                    resourceManager.loadTexture("CarTexture_" + data.name, token);
-                data.carTexture = resourceManager.getTexture("CarTexture_" + data.name);
+                ResourceManager::loadTexture("CarTexture_" + data.name, token);
+                data.carTexture = ResourceManager::getTexture("CarTexture_" + data.name);
                 break;
             case 2:
                 data.MaxSpeed = std::stof(token);
@@ -175,8 +168,8 @@ void Game::parseCarDataLine(const std::string& line, carData& data, ResourceMana
                 data.driveType = token;
                 break;
             case 9:
-                    resourceManager.loadTexture("LogoTexture_" + data.name, token);
-                data.logoTexture = resourceManager.getTexture("LogoTexture_" + data.name);
+                ResourceManager::loadTexture("LogoTexture_" + data.name, token);
+                data.logoTexture = ResourceManager::getTexture("LogoTexture_" + data.name);
                 break;
             }
         }

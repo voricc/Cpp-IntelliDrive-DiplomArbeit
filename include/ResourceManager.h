@@ -5,6 +5,7 @@
 #ifndef RESOURCEMANAGER_H
 #define RESOURCEMANAGER_H
 
+#include "VariableManager.h"
 #include <SFML/Graphics.hpp>
 #include <unordered_map>
 #include <string>
