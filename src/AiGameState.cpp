@@ -287,7 +287,8 @@ void AiGameState::update(Game &game) {
 
         std::vector<float> score(players.size(), 0.0f);
         for (int i = 0; i < players.size(); ++i) {
-            score[i] = players[i].points - players[i].car.getDistanceRotated() / 35 - players[i].car.getDistanceMovedBackwards() / 5 - (players[i].isDead ? -10.0f : 0.0f);
+            score[i] = players[i].points - players[i].car.getDistanceRotated() / VariableManager::getRotationPenalty() -
+                    players[i].car.getDistanceMovedBackwards() / VariableManager::getBackwardsMovementPenalty() - (players[i].isDead ? -10.0f : 0.0f);
         }
         network.breed(score, VariableManager::getAiWinners(), -VariableManager::getMutationIndex(), +VariableManager::getMutationIndex());
         initializeCar();
