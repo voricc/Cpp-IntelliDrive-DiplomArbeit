@@ -498,7 +498,7 @@ void SettingsState::handleInput(Game& game) {
         }
         else if (event.type == sf::Event::MouseWheelScrolled) {
             sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
-            if (hoveredTabElement) {
+            if (hoveredTabElement && !(hoveredTabElement->isBool || hoveredTabElement->isDropdown)) {
                 float stepVal = getScrollStep(hoveredTabElement->numericValue);
                 if (event.mouseWheelScroll.delta > 0) {
                     hoveredTabElement->numericValue += stepVal;
