@@ -1,15 +1,15 @@
+//
+// Created by Tobias on 14.01.2025.
+//
+
 #include "SettingsState.h"
-#include "ResourceManager.h"
-#include "VariableManager.h"
-#include <sstream>
-#include <iomanip>
 
 SettingsState::SettingsState()
-        : currentTab(SettingsTab::General), hoverSave(false), hoverBack(false)
+        : currentTab(SettingsTab::General), hoverSave(false), hoverBack(false),
+          hoverValueColor(sf::Color::Yellow), hoveredTabElement(nullptr)
 {
     font = ResourceManager::getFont("Rubik-Regular");
 
-    // Setup tab labels:
     generalTabText.setFont(font);
     generalTabText.setString("General");
     generalTabText.setCharacterSize(30);
@@ -72,7 +72,6 @@ void SettingsState::setupText(sf::Text& txt, const std::string& str, float x, fl
 }
 
 std::string SettingsState::floatToStringTrimZero(float val) {
-    // Convert float to string with up to 3 decimal places, then trim trailing zeros
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(3) << val;
     std::string s = ss.str();
@@ -86,11 +85,7 @@ std::string SettingsState::floatToStringTrimZero(float val) {
 }
 
 void SettingsState::loadUI() {
-    //
-    // General Tab
-    //
     {
-        // 1) Toggle AI Mode
         TabElement aiElem;
         setupText(aiElem.label, "AI Mode", LABEL_X, START_Y);
         bool aiMode = VariableManager::getAiMode();
@@ -98,13 +93,11 @@ void SettingsState::loadUI() {
         aiElem.isBool = true;
         generalData.elements.push_back(aiElem);
 
-        // 2) Dropdown label: "Units"
         TabElement unitsLabel;
         setupText(unitsLabel.label, "Units", LABEL_X, START_Y + GAP_Y);
         unitsLabel.isDropdown = true;
         generalData.elements.push_back(unitsLabel);
 
-        // 3) Actual dropdown for units
         unitsDropdown = new Dropdown(
                 font,
                 {"Metric", "Imperial"},
@@ -117,17 +110,12 @@ void SettingsState::loadUI() {
         generalData.dropdown = unitsDropdown;
     }
 
-    //
-    // Graphics Tab
-    //
     {
-        // 1) Dropdown label: "Display Mode"
         TabElement displayLabel;
         setupText(displayLabel.label, "Display Mode", LABEL_X, START_Y);
         displayLabel.isDropdown = true;
         graphicsData.elements.push_back(displayLabel);
 
-        // Actual displayModeDropdown
         displayModeDropdown = new Dropdown(
                 font,
                 {"fullscreen","windowed","borderless"},
@@ -139,13 +127,11 @@ void SettingsState::loadUI() {
         displayModeDropdown->setSelectedItem(VariableManager::getDisplayMode());
         graphicsData.dropdown = displayModeDropdown;
 
-        // 2) Dropdown label: "Resolution"
         TabElement resolutionLabel;
         setupText(resolutionLabel.label, "Resolution", LABEL_X, START_Y + GAP_Y);
         resolutionLabel.isDropdown = true;
         graphicsData.elements.push_back(resolutionLabel);
 
-        // Actual resolutionDropdown
         resolutionDropdown = new Dropdown(
                 font,
                 {"1280x720","1920x1080","2560x1440"},
@@ -157,7 +143,6 @@ void SettingsState::loadUI() {
         resolutionDropdown->setSelectedItem(VariableManager::getResolution());
         graphicsData.dropdown2 = resolutionDropdown;
 
-        // 3) VSync
         TabElement vsyncElem;
         setupText(vsyncElem.label, "VSync", LABEL_X, START_Y + 2 * GAP_Y);
         bool vsyncFlag = VariableManager::getVSync();
@@ -165,42 +150,34 @@ void SettingsState::loadUI() {
         vsyncElem.isBool = true;
         graphicsData.elements.push_back(vsyncElem);
 
-        // 4) FPS Limit
         TabElement fpsElem;
         setupText(fpsElem.label, "FPS Limit", LABEL_X, START_Y + 3 * GAP_Y);
         fpsElem.numericValue = static_cast<float>(VariableManager::getFpsLimit());
         setupText(fpsElem.value, std::to_string(VariableManager::getFpsLimit()), VALUE_X, START_Y + 3 * GAP_Y);
         fpsElem.isFloat = false;
-        fpsElem.step = 30.f; // Step by 30 each click
+        fpsElem.step = 30.f;
         graphicsData.elements.push_back(fpsElem);
     }
 
-    //
-    // Physics Tab
-    //
     {
-        // 1) Max Accel
         TabElement acc;
         setupText(acc.label, "Max Acceleration", LABEL_X, START_Y);
         acc.numericValue = VariableManager::getMaxAccelerationConstant();
         setupText(acc.value, floatToStringTrimZero(acc.numericValue), VALUE_X, START_Y);
         physicsData.elements.push_back(acc);
 
-        // 2) Max Ang Acc
         TabElement angAcc;
         setupText(angAcc.label, "Max Ang Acceleration", LABEL_X, START_Y + GAP_Y);
         angAcc.numericValue = VariableManager::getMaxAngularAccelerationConstant();
         setupText(angAcc.value, floatToStringTrimZero(angAcc.numericValue), VALUE_X, START_Y + GAP_Y);
         physicsData.elements.push_back(angAcc);
 
-        // 3) Max Speed
         TabElement maxSpd;
         setupText(maxSpd.label, "Max Speed", LABEL_X, START_Y + 2 * GAP_Y);
         maxSpd.numericValue = VariableManager::getMaxSpeed();
         setupText(maxSpd.value, floatToStringTrimZero(maxSpd.numericValue), VALUE_X, START_Y + 2 * GAP_Y);
         physicsData.elements.push_back(maxSpd);
 
-        // 4) Rot Speed Mult
         TabElement rotMult;
         setupText(rotMult.label, "Rotational Speed Mult", LABEL_X, START_Y + 3 * GAP_Y);
         rotMult.numericValue = VariableManager::getRotationalSpeedMultiplier();
@@ -208,7 +185,6 @@ void SettingsState::loadUI() {
         setupText(rotMult.value, floatToStringTrimZero(rotMult.numericValue), VALUE_X, START_Y + 3 * GAP_Y);
         physicsData.elements.push_back(rotMult);
 
-        // 5) Angular Damp
         TabElement angDamp;
         setupText(angDamp.label, "Angular Dampening", LABEL_X, START_Y + 4 * GAP_Y);
         angDamp.numericValue = VariableManager::getAngularDampingMultiplier();
@@ -217,11 +193,7 @@ void SettingsState::loadUI() {
         physicsData.elements.push_back(angDamp);
     }
 
-    //
-    // AI Tab
-    //
     {
-        // 1) Ray Amount
         TabElement rays;
         setupText(rays.label, "Rays", LABEL_X, START_Y);
         rays.numericValue = static_cast<float>(VariableManager::getRayAmount());
@@ -229,14 +201,12 @@ void SettingsState::loadUI() {
         setupText(rays.value, std::to_string(VariableManager::getRayAmount()), VALUE_X, START_Y);
         aiData.elements.push_back(rays);
 
-        // 2) AI FOV
         TabElement fov;
         setupText(fov.label, "Fov", LABEL_X, START_Y + GAP_Y);
         fov.numericValue = VariableManager::getAiFov();
         setupText(fov.value, floatToStringTrimZero(fov.numericValue), VALUE_X, START_Y + GAP_Y);
         aiData.elements.push_back(fov);
 
-        // 3) Networks
         TabElement nets;
         setupText(nets.label, "Networks", LABEL_X, START_Y + 2 * GAP_Y);
         nets.numericValue = static_cast<float>(VariableManager::getNetworksAmount());
@@ -244,14 +214,12 @@ void SettingsState::loadUI() {
         setupText(nets.value, std::to_string(VariableManager::getNetworksAmount()), VALUE_X, START_Y + 2 * GAP_Y);
         aiData.elements.push_back(nets);
 
-        // 4) Rand Values Max
         TabElement randMax;
         setupText(randMax.label, "Random Values Max", LABEL_X, START_Y + 3 * GAP_Y);
         randMax.numericValue = VariableManager::getAiInitialRandomValuesMax();
         setupText(randMax.value, floatToStringTrimZero(randMax.numericValue), VALUE_X, START_Y + 3 * GAP_Y);
         aiData.elements.push_back(randMax);
 
-        // 5) Rand Uniform
         TabElement randUni;
         setupText(randUni.label, "Uniform Distribution", LABEL_X, START_Y + 4 * GAP_Y);
         bool uni = VariableManager::getAiInitialRandomValuesUniform();
@@ -260,9 +228,6 @@ void SettingsState::loadUI() {
         aiData.elements.push_back(randUni);
     }
 
-    //
-    // Evolutionary Tab
-    //
     {
         TabElement winners;
         setupText(winners.label, "AI Winners", LABEL_X, START_Y);
@@ -308,9 +273,6 @@ void SettingsState::loadUI() {
         evoData.elements.push_back(mut);
     }
 
-    //
-    // Debug Tab
-    //
     {
         TabElement fpsC;
         setupText(fpsC.label, "FPS Counter", LABEL_X, START_Y);
@@ -346,13 +308,11 @@ void SettingsState::loadUI() {
         setupText(carsPerc.value, floatToStringTrimZero(carsPerc.numericValue), VALUE_X, START_Y + 4 * GAP_Y);
         debugData.elements.push_back(carsPerc);
 
-        // Dropdown label: "Metrics Mode"
         TabElement metricsLabel;
         setupText(metricsLabel.label, "Metrics Mode", LABEL_X, START_Y + 5 * GAP_Y);
         metricsLabel.isDropdown = true;
         debugData.elements.push_back(metricsLabel);
 
-        // Actual metrics dropdown
         metricsDropdown = new Dropdown(
                 font,
                 {"simple","advanced"},
@@ -381,6 +341,11 @@ void SettingsState::drawTabs(sf::RenderWindow& window) {
 
 void SettingsState::drawTabData(sf::RenderWindow& window, TabData& data) {
     for (auto& elem : data.elements) {
+        if (&elem == hoveredTabElement) {
+            elem.value.setFillColor(hoverValueColor);
+        } else {
+            elem.value.setFillColor(sf::Color::White);
+        }
         window.draw(elem.label);
         window.draw(elem.value);
     }
@@ -413,37 +378,53 @@ void SettingsState::drawDebug(sf::RenderWindow& window) {
 }
 
 void SettingsState::handleTabElementClick(TabElement& elem, sf::Vector2i mousePos, bool isRightClick) {
-    // Only react if the mouse is over the “value” text
     if (!elem.value.getGlobalBounds().contains(mousePos.x, mousePos.y)) return;
-
-    // For bool, toggle On/Off
     if (elem.isBool) {
         std::string current = elem.value.getString();
         elem.value.setString(current == "On" ? "Off" : "On");
     }
-        // If it’s a label for a dropdown (isDropdown), do nothing when clicked
-    else if (elem.isDropdown) {
-        // no direct toggling for the label
-    }
-    else {
-        // Otherwise, numeric
+    else if (!elem.isDropdown) {
         float v = elem.numericValue;
         float localStep = elem.step;
-
-        // Right-click to go backwards
         if (isRightClick) localStep = -localStep;
-
         v += localStep;
-        // optional wrap-around
         if (v < elem.minVal) v = elem.maxVal;
         if (v > elem.maxVal) v = elem.minVal;
-
         elem.numericValue = v;
         if (elem.isFloat) {
             elem.value.setString(floatToStringTrimZero(v));
         } else {
             elem.value.setString(std::to_string(static_cast<int>(v)));
         }
+    }
+}
+
+float SettingsState::getScrollStep(float val) {
+    float absVal = std::fabs(val);
+    if (absVal >= 1.f) {
+        int digits = 0;
+        int intPart = static_cast<int>(absVal);
+        while (intPart >= 10) {
+            intPart /= 10;
+            digits++;
+        }
+        float base = 1.f;
+        for (int i = 0; i < digits; ++i) {
+            base *= 10.f;
+        }
+        return base;
+    } else {
+        int decimalPlaces = 0;
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6) << absVal;
+        std::string s = oss.str();
+        size_t pos = s.find('.') != std::string::npos ? s.find('.') : s.size();
+        size_t idx = pos + 1;
+        while (idx < s.size() && s[idx] == '0') {
+            decimalPlaces++;
+            idx++;
+        }
+        return std::pow(10.f, -(decimalPlaces + 1));
     }
 }
 
@@ -457,7 +438,6 @@ void SettingsState::handleInput(Game& game) {
             sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
             bool isRightClick = (event.mouseButton.button == sf::Mouse::Right);
 
-            // Tab switching
             if (generalTabText.getGlobalBounds().contains(mousePos.x, mousePos.y))      switchTab(SettingsTab::General);
             else if (graphicsTabText.getGlobalBounds().contains(mousePos.x, mousePos.y))switchTab(SettingsTab::Graphics);
             else if (physicsTabText.getGlobalBounds().contains(mousePos.x, mousePos.y)) switchTab(SettingsTab::Physics);
@@ -465,7 +445,6 @@ void SettingsState::handleInput(Game& game) {
             else if (evoTabText.getGlobalBounds().contains(mousePos.x, mousePos.y))     switchTab(SettingsTab::Evolutionary);
             else if (debugTabText.getGlobalBounds().contains(mousePos.x, mousePos.y))   switchTab(SettingsTab::Debug);
 
-            // Save / Back
             if (saveButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                 applyChanges(game);
                 game.changeState(std::make_shared<MenuState>());
@@ -474,7 +453,6 @@ void SettingsState::handleInput(Game& game) {
                 game.changeState(std::make_shared<MenuState>());
             }
 
-            // Process the click in the current tab
             auto processTab = [&](TabData& tabData){
                 for (auto& e : tabData.elements) {
                     handleTabElementClick(e, mousePos, isRightClick);
@@ -496,26 +474,73 @@ void SettingsState::handleInput(Game& game) {
             sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
             hoverSave = saveButton.getGlobalBounds().contains(mousePos.x, mousePos.y);
             hoverBack = backButton.getGlobalBounds().contains(mousePos.x, mousePos.y);
+            hoveredTabElement = nullptr;
+
+            auto checkHover = [&](TabData& tabData){
+                for (auto& e : tabData.elements) {
+                    if (e.value.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                        hoveredTabElement = &e;
+                        break;
+                    }
+                }
+                if (tabData.dropdown)  tabData.dropdown->handleEvent(event, game.window);
+                if (tabData.dropdown2) tabData.dropdown2->handleEvent(event, game.window);
+            };
+
+            switch (currentTab) {
+                case SettingsTab::General:     checkHover(generalData);     break;
+                case SettingsTab::Graphics:    checkHover(graphicsData);    break;
+                case SettingsTab::Physics:     checkHover(physicsData);     break;
+                case SettingsTab::AI:          checkHover(aiData);          break;
+                case SettingsTab::Evolutionary:checkHover(evoData);         break;
+                case SettingsTab::Debug:       checkHover(debugData);       break;
+            }
+        }
+        else if (event.type == sf::Event::MouseWheelScrolled) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(game.window);
+            if (hoveredTabElement && !(hoveredTabElement->isBool || hoveredTabElement->isDropdown)) {
+                float stepVal = getScrollStep(hoveredTabElement->numericValue);
+                if (event.mouseWheelScroll.delta > 0) {
+                    hoveredTabElement->numericValue += stepVal;
+                } else if (event.mouseWheelScroll.delta < 0) {
+                    hoveredTabElement->numericValue -= stepVal;
+                }
+                if (hoveredTabElement->numericValue < hoveredTabElement->minVal) {
+                    hoveredTabElement->numericValue = hoveredTabElement->minVal;
+                }
+                if (hoveredTabElement->numericValue > hoveredTabElement->maxVal) {
+                    hoveredTabElement->numericValue = hoveredTabElement->maxVal;
+                }
+                if (hoveredTabElement->isFloat) {
+                    hoveredTabElement->value.setString(
+                            floatToStringTrimZero(hoveredTabElement->numericValue)
+                    );
+                } else {
+                    hoveredTabElement->value.setString(
+                            std::to_string(static_cast<int>(hoveredTabElement->numericValue))
+                    );
+                }
+            }
         }
         else {
-            // For dropdown expansions
             auto handleDropdowns = [&](TabData& tabData){
                 if (tabData.dropdown)  tabData.dropdown->handleEvent(event, game.window);
                 if (tabData.dropdown2) tabData.dropdown2->handleEvent(event, game.window);
             };
 
             switch (currentTab) {
-                case SettingsTab::General:     handleDropdowns(generalData); break;
-                case SettingsTab::Graphics:    handleDropdowns(graphicsData); break;
-                case SettingsTab::Debug:       handleDropdowns(debugData);    break;
-                default: break;
+                case SettingsTab::General:     handleDropdowns(generalData);     break;
+                case SettingsTab::Graphics:    handleDropdowns(graphicsData);    break;
+                case SettingsTab::Debug:       handleDropdowns(debugData);       break;
+                case SettingsTab::Physics:     break;
+                case SettingsTab::AI:          break;
+                case SettingsTab::Evolutionary:break;
             }
         }
     }
 }
 
 void SettingsState::update(Game& game) {
-    // No special logic for now
 }
 
 void SettingsState::render(Game& game) {
@@ -543,8 +568,6 @@ void SettingsState::render(Game& game) {
 }
 
 void SettingsState::applyChanges(Game& game) {
-    // --- GENERAL ---
-    // AI Mode is first element in generalData
     if (!generalData.elements.empty()) {
         bool aiMode = (generalData.elements[0].value.getString() == "On");
         VariableManager::setAiMode(aiMode);
@@ -553,15 +576,12 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setUnits(generalData.dropdown->getSelectedItem());
     }
 
-    // --- GRAPHICS ---
     if (graphicsData.elements.size() >= 2) {
         bool vsyncOn = (graphicsData.elements[0].value.getString() == "On");
         VariableManager::setVSync(vsyncOn);
-
-        // FPS Limit
         float fpsF = graphicsData.elements[1].numericValue;
         int fpsLim = static_cast<int>(fpsF);
-        if (vsyncOn) fpsLim = 120;  // e.g., cap it
+        if (vsyncOn) fpsLim = 120;
         VariableManager::setFpsLimit(fpsLim);
     }
     if (graphicsData.dropdown) {
@@ -571,7 +591,6 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setResolution(graphicsData.dropdown2->getSelectedItem());
     }
 
-    // --- PHYSICS ---
     if (physicsData.elements.size() >= 5) {
         VariableManager::setMaxAccelerationConstant(         physicsData.elements[0].numericValue );
         VariableManager::setMaxAngularAccelerationConstant(   physicsData.elements[1].numericValue );
@@ -580,7 +599,6 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setAngularDampingMultiplier(         physicsData.elements[4].numericValue );
     }
 
-    // --- AI ---
     if (aiData.elements.size() >= 5) {
         VariableManager::setRayAmount( static_cast<int>(aiData.elements[0].numericValue) );
         VariableManager::setAiFov( aiData.elements[1].numericValue );
@@ -590,7 +608,6 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setAiInitialRandomValuesUniform(uniform);
     }
 
-    // --- EVOLUTIONARY ---
     if (evoData.elements.size() >= 7) {
         VariableManager::setAiWinners(                static_cast<int>( evoData.elements[0].numericValue ) );
         VariableManager::setCheckpointPoints(         evoData.elements[1].numericValue );
@@ -601,7 +618,6 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setMutationIndex(            evoData.elements[6].numericValue );
     }
 
-    // --- DEBUG ---
     if (debugData.elements.size() >= 5) {
         bool fpsC      = (debugData.elements[0].value.getString() == "On");
         bool showCol   = (debugData.elements[1].value.getString() == "On");
@@ -619,10 +635,8 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setMetricsMode(debugData.dropdown->getSelectedItem());
     }
 
-    // Save all to config
-    VariableManager::saveToJson("resources/config/config.json");
+    VariableManager::saveToJson(VariableManager::getPathToConfig());
 
-    // Recreate the window with the updated resolution + style
     std::string resStr = VariableManager::getResolution();
     int width  = 1920;
     int height = 1080;

@@ -48,9 +48,9 @@ std::vector<Utility::Activations> VariableManager::AI_ACTIVATIONS = {
 // Evolutionary Algorithm
 int VariableManager::AI_WINNERS = 5;
 float VariableManager::CHECKPOINT_POINTS = 25;
-float VariableManager::ROTATION_PENALTY;
+float VariableManager::ROTATION_PENALTY = 35;
 float VariableManager::CHECKPOINT_RADIUS = 140.0f;
-float VariableManager::BACKWARDS_MOVEMENT_PENALTY;
+float VariableManager::BACKWARDS_MOVEMENT_PENALTY = 5;
 float VariableManager::RESTART_ON_DEAD_PERCENTAGE = 0.995;
 float VariableManager::MUTATION_INDEX = 0.01f;
 
