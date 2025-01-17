@@ -58,7 +58,7 @@ float VariableManager::MUTATION_INDEX = 0.01f;
 bool VariableManager::SHOW_COLLIDERS = false;
 bool VariableManager::SHOW_CHECKPOINTS = false;
 bool VariableManager::SHOW_RAYS = false;
-float VariableManager::SHOW_CARS_PERCENTAGE = 1.0f;
+bool VariableManager::SHOW_CARS_FIRST = false;
 
 // Game
 bool VariableManager::AI_MODE = false;
@@ -113,6 +113,7 @@ void VariableManager::saveToJson(const std::string& filePath) {
     // Evolutionary Algorithm
     jsonData["AI_WINNERS"] = AI_WINNERS;
     jsonData["CHECKPOINT_POINTS"] = CHECKPOINT_POINTS;
+    jsonData["CHECKPOINT_RADIUS"] = CHECKPOINT_RADIUS;
     jsonData["ROTATION_PENALTY"] = ROTATION_PENALTY;
     jsonData["BACKWARDS_MOVEMENT_PENALTY"] = BACKWARDS_MOVEMENT_PENALTY;
     jsonData["RESTART_ON_DEAD_PERCENTAGE"] = RESTART_ON_DEAD_PERCENTAGE;
@@ -122,7 +123,7 @@ void VariableManager::saveToJson(const std::string& filePath) {
     jsonData["SHOW_COLLIDERS"] = SHOW_COLLIDERS;
     jsonData["SHOW_CHECKPOINTS"] = SHOW_CHECKPOINTS;
     jsonData["SHOW_RAYS"] = SHOW_RAYS;
-    jsonData["SHOW_CARS_PERCENTAGE"] = SHOW_CARS_PERCENTAGE;
+    jsonData["SHOW_CARS_FIRST"] = SHOW_CARS_FIRST;
 
     // Game
     jsonData["AI_MODE"] = AI_MODE;
@@ -188,6 +189,7 @@ void VariableManager::loadFromJson(const std::string& filePath) {
     // Evolutionary Algorithm
     AI_WINNERS = jsonData.value("AI_WINNERS", AI_WINNERS);
     CHECKPOINT_POINTS = jsonData.value("CHECKPOINT_POINTS", CHECKPOINT_POINTS);
+    CHECKPOINT_RADIUS = jsonData.value("CHECKPOINT_RADIUS", CHECKPOINT_RADIUS);
     ROTATION_PENALTY = jsonData.value("ROTATION_PENALTY", ROTATION_PENALTY);
     BACKWARDS_MOVEMENT_PENALTY = jsonData.value("BACKWARDS_MOVEMENT_PENALTY", BACKWARDS_MOVEMENT_PENALTY);
     RESTART_ON_DEAD_PERCENTAGE = jsonData.value("RESTART_ON_DEAD_PERCENTAGE", RESTART_ON_DEAD_PERCENTAGE);
@@ -197,7 +199,7 @@ void VariableManager::loadFromJson(const std::string& filePath) {
     SHOW_COLLIDERS = jsonData.value("SHOW_COLLIDERS", SHOW_COLLIDERS);
     SHOW_CHECKPOINTS = jsonData.value("SHOW_CHECKPOINTS", SHOW_CHECKPOINTS);
     SHOW_RAYS = jsonData.value("SHOW_RAYS", SHOW_RAYS);
-    SHOW_CARS_PERCENTAGE = jsonData.value("SHOW_CARS_PERCENTAGE", SHOW_CARS_PERCENTAGE);
+    SHOW_CARS_FIRST = jsonData.value("SHOW_CARS_PERCENTAGE", SHOW_CARS_FIRST);
 
     // Game
     if(jsonData.contains("AI_MODE")) AI_MODE = jsonData["AI_MODE"].get<bool>();

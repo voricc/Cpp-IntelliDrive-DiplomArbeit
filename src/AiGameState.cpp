@@ -241,13 +241,11 @@ void AiGameState::render(Game &game) {
         }
     }
 
-    if(false){
-        players[0].car.render(game.window);
-    }else{
-        for (int playerIDX = 0; playerIDX < VariableManager::getNetworksAmount(); ++playerIDX) {
-            Player &player = players[playerIDX];
-            Car &car = player.car;
+    for (int playerIDX = 0; playerIDX < ((VariableManager::getShowCarsFirst()) ? 1 : VariableManager::getNetworksAmount()); ++playerIDX) {
+        Player &player = players[playerIDX];
+        Car &car = player.car;
 
+        if (!player.isDead){
             car.render(game.window);
 
             if(VariableManager::getShowRays()){
@@ -267,7 +265,9 @@ void AiGameState::render(Game &game) {
 
     sf::Text t;
     t.setString("Generation: " + std::to_string(currentGen) + "\nMutation Index: " +
-    std::to_string(VariableManager::getMutationIndex()) + "\nPlayers alive: " +
+    std::to_string(VariableManager::getMutationIndex()) + "\nDelta Time: " +
+    std::to_string(variableDt) +
+    "\nPlayers alive: " +
     std::to_string(VariableManager::getNetworksAmount() - deadCars));
 
     t.setFillColor(sf::Color::Black);
@@ -314,7 +314,7 @@ void AiGameState::update(Game &game) {
 
         if(!player.isDead) {
             // update position
-            car.update(0.1f);
+            car.update(variableDt);
 
             // Check if checkpoint was reached
             if (checkpoints.size() > 0) {
@@ -441,9 +441,9 @@ void AiGameState::handleInput(Game &game) {
         if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num3){
             VariableManager::setShowColliders(!VariableManager::getShowColliders());
         }
-//        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num4){
-//            VariableManager::setShowCheckpoints(!VariableManager::getShowCheckpoints());
-//        }
+        if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Num4){
+            VariableManager::setShowCarsFirst(!VariableManager::getShowCarsFirst());
+        }
 
         if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::S){
             std::cout << "\nNetwork saved: " << network.save("resources/Networks/network0.json", VariableManager::getAiWinners()) <<
@@ -464,9 +464,19 @@ void AiGameState::handleInput(Game &game) {
         }
         if (event.type == sf::Event::MouseWheelScrolled) {
             if (event.mouseWheelScroll.delta > 0) {
-                VariableManager::setMutationIndex(VariableManager::getMutationIndex() + 0.01f);
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)){
+                    variableDt *= 2.0f;
+                }else{
+                    VariableManager::setMutationIndex(VariableManager::getMutationIndex() + 0.01f);
+                }
+
             } else if (event.mouseWheelScroll.delta < 0) {
-                VariableManager::setMutationIndex(VariableManager::getMutationIndex() - 0.01f);
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)){
+                    variableDt /= 2.0f;
+                }else{
+                    VariableManager::setMutationIndex(VariableManager::getMutationIndex() - 0.01f);
+                }
+
             }
         }
     }

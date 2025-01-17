@@ -304,8 +304,9 @@ void SettingsState::loadUI() {
 
         TabElement carsPerc;
         setupText(carsPerc.label, "Show Cars", LABEL_X, START_Y + 4 * GAP_Y);
-        carsPerc.numericValue = VariableManager::getShowCarsPercentage();
-        setupText(carsPerc.value, floatToStringTrimZero(carsPerc.numericValue), VALUE_X, START_Y + 4 * GAP_Y);
+        bool scf = VariableManager::getShowCarsFirst();
+        carsPerc.isBool = true;
+        setupText(carsPerc.value, scf ? "On" : "Off", VALUE_X, START_Y + 4 * GAP_Y);
         debugData.elements.push_back(carsPerc);
 
         TabElement metricsLabel;
@@ -629,7 +630,7 @@ void SettingsState::applyChanges(Game& game) {
         VariableManager::setShowColliders(showCol);
         VariableManager::setShowCheckpoints(showCheck);
         VariableManager::setShowRays(showRays);
-        VariableManager::setShowCarsPercentage(carsPerc);
+        VariableManager::setShowCarsFirst(carsPerc);
     }
     if (debugData.dropdown) {
         VariableManager::setMetricsMode(debugData.dropdown->getSelectedItem());

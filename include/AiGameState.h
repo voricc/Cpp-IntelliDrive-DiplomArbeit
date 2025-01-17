@@ -30,6 +30,8 @@ private:
     std::vector<Player> players;
     carData carTemplate;
 
+    float variableDt = 0.1f;
+
     bool forceReset = false;
 
     std::vector<float> rayAngles;

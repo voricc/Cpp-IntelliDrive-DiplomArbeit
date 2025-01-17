@@ -73,7 +73,7 @@ private:
     static bool SHOW_COLLIDERS;
     static bool SHOW_CHECKPOINTS;
     static bool SHOW_RAYS;
-    static float SHOW_CARS_PERCENTAGE;
+    static bool SHOW_CARS_FIRST;
 
     // Game
     static bool AI_MODE;
@@ -212,8 +212,8 @@ public:
     static bool getShowRays() { return SHOW_RAYS; }
     static void setShowRays(bool value) { SHOW_RAYS = value; }
 
-    static float getShowCarsPercentage() { return SHOW_CARS_PERCENTAGE; }
-    static void setShowCarsPercentage(float value) { SHOW_CARS_PERCENTAGE = value; }
+    static bool getShowCarsFirst() { return SHOW_CARS_FIRST; }
+    static void setShowCarsFirst(bool value) { SHOW_CARS_FIRST = value; }
 
     // Game
     static bool getAiMode() { return AI_MODE; };

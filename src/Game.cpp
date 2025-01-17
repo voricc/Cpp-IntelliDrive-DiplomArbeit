@@ -44,14 +44,6 @@ void Game::run() {
         dt = elapsedTime.count() / 1e9;
         previousTime = currentTime;
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)){
-            window.setFramerateLimit(100);
-        }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)){
-            window.setFramerateLimit(10000);
-        }
-
         if (auto currentState = getCurrentState()) {
             currentState->handleInput(*this);
             currentState->update(*this);
